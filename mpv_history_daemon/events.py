@@ -25,7 +25,7 @@ from logzero import setup_logger  # type: ignore[import]
 
 # TODO: better logger setup?
 loglevel: str = os.environ.get("MPV_HISTORY_EVENTS_LOGLEVEL", "info").upper()
-logger = setup_logger(__name__, level=loglevel)
+logger = setup_logger("mpv_history_events", level=loglevel)
 
 EventType = str
 EventData = Any
