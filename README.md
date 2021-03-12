@@ -22,8 +22,10 @@ mpv_history_daemon_exec /your/data/dir
 
 ### Usage
 
+For the daemon:
+
 ```
-Usage: mpv-history-daemon [OPTIONS] SOCKET_DIR DATA_DIR
+Usage: mpv-history-daemon daemon [OPTIONS] SOCKET_DIR DATA_DIR
 
   Socket dir is the directory with mpv sockets (/tmp/mpvsockets, probably)
   Data dir is the directory to store the history JSON files

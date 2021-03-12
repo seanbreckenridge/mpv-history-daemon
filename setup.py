@@ -23,7 +23,7 @@ setup(
     name="mpv_history_daemon",
     packages=find_packages(include=["mpv_history_daemon"]),
     entry_points={
-        "console_scripts": ["mpv-history-daemon = mpv_history_daemon.__main__:main"]
+        "console_scripts": ["mpv-history-daemon = mpv_history_daemon.__main__:cli"]
     },
     scripts=["bin/mpv_history_daemon_exec"],
     url="https://github.com/seanbreckenridge/mpv-history-daemon",

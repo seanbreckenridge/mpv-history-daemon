@@ -13,7 +13,7 @@ DATA_DIR="${1?:Must provide the data directory to store JSON files as the first 
 
 start_daemon() {
 	set -e
-	mpv-history-daemon /tmp/mpvsockets/ "${DATA_DIR}" &
+	mpv-history-daemon daemon /tmp/mpvsockets/ "${DATA_DIR}" &
 	DAEMON_PID=$!
 	set +e
 }
