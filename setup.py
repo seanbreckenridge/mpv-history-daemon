@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from pathlib import Path
 from setuptools import setup, find_packages
 
-requirements = ["click", "python-mpv-jsonipc", "logzero", "simplejson"]
+requirements = Path("requirements.txt").read_text().strip().splitlines()
 
 setup(
     author="Sean Breckenridge",
