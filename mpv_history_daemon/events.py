@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import (
     Iterator,
     Sequence,
+    List,
     NamedTuple,
     Set,
     Any,
@@ -45,7 +46,7 @@ class Media(NamedTuple):
     # title of the media (if URL, could be <title>...</title> from ytdl
     media_title: Optional[str]
     # additional metadata on what % I was through the media while pausing/playing/seeking
-    percents: Dict[float, float]
+    percents: List[Tuple[datetime, float]]
     metadata: Dict[str, str]  # metadata from the file, if it exists
 
     @property
@@ -136,7 +137,10 @@ def _read_event_stream(p: Path) -> Results:
             pause_duration=d["pause_duration"],
             media_duration=d.get("duration"),
             media_title=d.get("media_title"),
-            percents=d["percents"],
+            percents=[
+                (parse_datetime_sec(timestamp), percent)
+                for timestamp, percent in d["percents"].items()
+            ],
             metadata=d.get("metadata", {}),
         )
         # if percentage seems off, left hanging socket?? (not sure), skip

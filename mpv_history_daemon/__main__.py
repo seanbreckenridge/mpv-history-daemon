@@ -58,6 +58,7 @@ def parse(data_dir: str, all_events: bool, debug: bool) -> None:
     """
     Takes the data directory and parses events into Media
     """
+    global event_logger
     if debug:
         event_logger = setup_logger(__name__, level="DEBUG")
     events_func: Any = all_history if all_events else history

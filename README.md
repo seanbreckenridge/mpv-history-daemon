@@ -86,8 +86,8 @@ As an example:
     "media_duration": 67.578776,
     "media_title": "04 - Madvillain - Bistro.mp3",
     "percents": {
-      "1614905960.4350188": 11.150022,
-      "1614905981.0133965": 11.151141
+      1614905960: 11.150022,
+      1614905981: 11.151141
     },
     "metadata": {}
   }
@@ -107,7 +107,7 @@ This can also be called from python:
   pause_duration=0.0,
   media_duration=150.569796,
   media_title='Raid [feat. M.E.D. aka Medaphoar]',
-  percents={1611383222.8045554: 1.471624},
+  percents=[(datetime.datetime(2021, 1, 23, 6, 27, 2, tzinfo=datetime.timezone.utc), 1.471624)]
   metadata={})
 ]
 ```

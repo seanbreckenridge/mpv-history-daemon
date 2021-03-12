@@ -11,14 +11,12 @@
 # when mpv EOFd/disconnected due to a BrokenPipe.
 # BrokenPipes are captured in the event_eof function
 
-import sys
 import os
 import json
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from time import sleep, time
 
-import click
 from python_mpv_jsonipc import MPV  # type: ignore[import]
 from logzero import logger, logfile  # type: ignore[import]
 
@@ -299,11 +297,10 @@ class LoopHandler:
                 # try to access path to possibly cause ConnectionRefusedError,
                 # removing a dead socket
                 sock_obj.path
-        except (ConnectionRefusedError, BrokenPipeError) as conn:
+        except (ConnectionRefusedError, BrokenPipeError):
             logger.debug(
                 f"Connected refused for socket at {socket_loc}, removing dead/dangling socket file..."
             )
-            # logger.exception(conn)
             # make sure its actually removed from active sockets
             # gets removed from socket_data after 10 seconds
             if socket_loc in self.sockets:
