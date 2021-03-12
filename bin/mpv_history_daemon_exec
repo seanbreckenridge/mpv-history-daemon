@@ -1,0 +1,46 @@
+#!/bin/bash -x
+# For whatever reason, my mpv daemon stops working after running
+# continiously for a few days. This restarts it every so often
+# when its not being used for anything
+#
+# Pass the data directory for the mpv daemon as the first argument
+
+declare DAEMON_PID DATA_DIR
+# capture any additional arguments to pass onto mpv-history-daemon
+DAEMON_PID=''
+
+DATA_DIR="${1?:Must provide the data directory to store JSON files as the first argument}"
+
+start_daemon() {
+	set -e
+	mpv-history-daemon /tmp/mpvsockets/ "${DATA_DIR}" &
+	DAEMON_PID=$!
+	set +e
+}
+
+mpv_active() {
+	pgrep -x mpv
+}
+
+attempt_restart() {
+	if mpv_active; then
+		echo "Found active mpv instance, ignoring..."
+	else
+		echo "No mpv instances active, restarting mpv daemon..."
+		kill "${DAEMON_PID}"
+		start_daemon
+	fi
+}
+
+cleanup() {
+	echo "Killing background process..."
+	kill "${DAEMON_PID}"
+}
+
+trap cleanup EXIT
+
+start_daemon
+while true; do
+	sleep 3h
+	attempt_restart
+done
