@@ -22,7 +22,7 @@ setup(
         "console_scripts": ["mpv-history-daemon = mpv_history_daemon.__main__:cli"]
     },
     license="http://www.apache.org/licenses/LICENSE-2.0",
-    scripts=["bin/mpv_history_daemon_exec"],
+    scripts=["bin/mpv_history_daemon_restart"],
     url="https://github.com/seanbreckenridge/mpv-history-daemon",
     version="0.1.0",
 )

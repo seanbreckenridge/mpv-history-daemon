@@ -17,7 +17,7 @@ Requires `python3.6+`
 For whatever reason, this stops working after a few days of continuous use, so I wrap this with another script which restarts this every so often. I would recommend starting this by running:
 
 ```
-mpv_history_daemon_exec /your/data/dir
+mpv_history_daemon_restart /your/data/dir
 ```
 
 ## Usage
