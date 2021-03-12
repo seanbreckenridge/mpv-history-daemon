@@ -1,6 +1,6 @@
 #!/bin/bash -x
 # For whatever reason, my mpv daemon stops working after running
-# continiously for a few days. This restarts it every so often
+# continuously for a few days. This restarts it every so often
 # when its not being used for anything
 #
 # Pass the data directory for the mpv daemon as the first argument

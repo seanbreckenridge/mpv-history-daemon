@@ -3,11 +3,7 @@
 
 from setuptools import setup, find_packages
 
-requirements = [
-    "click",
-    "python-mpv-jsonipc",
-    "logzero",
-]
+requirements = ["click", "python-mpv-jsonipc", "logzero", "simplejson"]
 
 setup(
     author="Sean Breckenridge",

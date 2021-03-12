@@ -1,4 +1,4 @@
-## `mpv-history-daemon`
+# mpv-history-daemon
 
 This functions by connecting to socket files created by [`mpv-sockets`](https://github.com/seanbreckenridge/mpv-sockets). That launches mpv with unique mpv sockets at `/tmp/mpvsockets/`.
 
@@ -20,9 +20,9 @@ For whatever reason, this stops working after a few days of continuous use, so I
 mpv_history_daemon_exec /your/data/dir
 ```
 
-### Usage
+## Usage
 
-For the daemon:
+### daemon
 
 ```
 Usage: mpv-history-daemon daemon [OPTIONS] SOCKET_DIR DATA_DIR
@@ -54,63 +54,50 @@ Some logs, to get an idea of what this captures:
 [I 200901 03:48:44 mpv-history-daemon:314] /tmp/mpvsockets/1598956534118491075: writing to file...
 ```
 
-The corresponding JSON file looks like:
-
-```
-  "1598957274.3349547": {
-    "mpv-launched": 1598957274.334953
-  },
-  "1598957274.335344": {
-    "working-directory": "/home/sean/Music"
-  },
-  "1598957274.3356173": {
-    "playlist-count": 12
-  },
-  "1598957274.339725": {},
-  "1598957274.3421223": {
-    "playlist-pos": 2
-  },
-  "1598957274.342346": {
-    "path": "Masayoshi Takanaka/Masayoshi Takanaka - Alone (1981)/02 - Feedback's Feel.mp3"
-  },
-  "1598957274.3425295": {
-    "media-title": "Feedback's Feel"
-  },
-  "1598957274.3427346": {
-    "metadata": {
-      "title": "Feedback's Feel",
-      "album": "Alone",
-      "genre": "Jazz",
-      "album_artist": "高中正義",
-      "track": "02/8",
-      "disc": "1/1",
-      "artist": "高中正義",
-      "date": "1981"
-    }
-  },
-  "1598957274.342985": {
-    "duration": 351.033469
-  },
-  "1598957274.343794": {
-    "resumed": {
-      "percent-pos": 66.85633
-    }
-  },
-  "1598957321.3952177": {
-    "eof": null
-  },
-  "1598957321.3955588": {
-    "mpv-quit": 1598957321.395554
-  }
-}
-```
-
 More events would keep getting logged, as I pause/play, or the file ends and a new file starts. The key for each JSON value is the epoch time, so everything is timestamped.
 
-I parse the stream of events with some code [here](https://github.com/seanbreckenridge/HPI/blob/master/my/mpv.py); which lets me access it through a REPL/through `my.mpv`. For example, to find my most played song:
+### parse
+
+The daemon saves the raw event data above in JSON files, which can then be parsed into individual instances of media:
 
 ```
->>> import my.mpv, collections
->>> collections.Counter([e.path for e in list(my.mpv())]).most_common(1)
-[('/home/data/media/music/Janelle Monáe/The_Electric_Lady/15-Victory.mp3', 8)]
+$ mpv-history-daemon parse --help
+Usage: mpv-history-daemon parse [OPTIONS] DATA_DIR
+
+  Takes the data directory and parses events into Media
+
+Options:
+  --all-events  return all events, even ones which by context you probably
+                didn't listen to
+
+  --debug       Increase log verbosity/print warnings while parsing JSON files
+  --help        Show this message and exit.
+```
+
+As an example:
+
+```json
+{
+    "path": "/home/data/media/music/MF DOOM/Madvillain - Madvillainy/04 - Madvillain - Bistro.mp3",
+    "is_stream": false,
+    "start_time": 1614905952,
+    "end_time": 1614906040,
+    "pause_duration": 20.578377723693848,
+    "media_duration": 67.578776,
+    "media_title": "04 - Madvillain - Bistro.mp3",
+    "percents": {
+      "1614905960.4350188": 11.150022,
+      "1614905981.0133965": 11.151141
+    },
+    "metadata": {}
+  }
+```
+
+This can also be called from python:
+
+```python
+>>> from pathlib import Path
+>>> from mpv_history_daemon.events import history
+>>> list(history([Path("1611383220380934268.json")]))
+[Media(path='/home/data/media/music/MF DOOM/Madvillain - Madvillainy/05 - Madvillain - Raid [feat. M.E.D. aka Medaphoar].mp3', is_stream=False, start_time=datetime.datetime(2021, 1, 23, 6, 27, tzinfo=datetime.timezone.utc), end_time=datetime.datetime(2021, 1, 23, 6, 29, 30, tzinfo=datetime.timezone.utc), pause_duration=0.0, media_duration=150.569796, media_title='Raid [feat. M.E.D. aka Medaphoar]', percents={1611383222.8045554: 1.471624}, metadata={})]
 ```
