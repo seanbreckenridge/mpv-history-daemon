@@ -20,7 +20,7 @@ For whatever reason, this stops working after a few days of continuous use, so I
 mpv_history_daemon_exec /your/data/dir
 ```
 
----
+### Usage
 
 ```
 Usage: mpv-history-daemon [OPTIONS] SOCKET_DIR DATA_DIR
