@@ -85,10 +85,10 @@ As an example:
     "pause_duration": 20.578377723693848,
     "media_duration": 67.578776,
     "media_title": "04 - Madvillain - Bistro.mp3",
-    "percents": {
-      1614905960: 11.150022,
-      1614905981: 11.151141
-    },
+    "percents": [
+      [1614905960, 11.150022],
+      [1614905981, 11.151141]
+    ],
     "metadata": {}
   }
 ```
