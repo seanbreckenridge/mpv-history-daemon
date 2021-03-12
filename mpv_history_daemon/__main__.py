@@ -14,6 +14,9 @@ from .events import logger as event_logger
 
 @click.group()
 def cli():
+    """
+    Connects to mpv socket files and saves a history of events
+    """
     pass
 
 

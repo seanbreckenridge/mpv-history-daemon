@@ -1,15 +1,17 @@
-# This probably isn't optmized/the minimum amount of code to do this
-# Dealing with sockets/EOFs/random drops is a pain, so this stays on the safe side
-# of validating to make sure sockets arent left dangling or data isn't
-# saved, because of a ConnectionRefusedError/BrokenPipe/general OSErrors
-#
-# logzero logs all the exceptions, incase theyre not what I expect
-# most of the times, mpv will be open for more than 10 minutes, so
-# the WRITE_PERIOD periodically writes will at least capture what was
-# being listened to, even if *somehow* (is not common case)
-# I lose data on what happened
-# when mpv EOFd/disconnected due to a BrokenPipe.
-# BrokenPipes are captured in the event_eof function
+"""
+This probably isn't optmized/the minimum amount of code to do this
+Dealing with sockets/EOFs/random drops is a pain, so this stays on the safe side
+of validating to make sure sockets arent left dangling or data isn't
+saved, because of a ConnectionRefusedError/BrokenPipe/general OSErrors
+
+logzero logs all the exceptions, incase theyre not what I expect
+most of the times, mpv will be open for more than 10 minutes, so
+the WRITE_PERIOD periodically writes will at least capture what was
+being listened to, even if *somehow* (is not common case)
+I lose data on what happened
+when mpv EOFd/disconnected due to a BrokenPipe.
+BrokenPipes are captured in the event_eof function
+"""
 
 import os
 import json

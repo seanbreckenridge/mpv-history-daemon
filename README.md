@@ -78,19 +78,19 @@ As an example:
 
 ```json
 {
-    "path": "/home/data/media/music/MF DOOM/Madvillain - Madvillainy/04 - Madvillain - Bistro.mp3",
-    "is_stream": false,
-    "start_time": 1614905952,
-    "end_time": 1614906040,
-    "pause_duration": 20.578377723693848,
-    "media_duration": 67.578776,
-    "media_title": "04 - Madvillain - Bistro.mp3",
-    "percents": [
-      [1614905960, 11.150022],
-      [1614905981, 11.151141]
-    ],
-    "metadata": {}
-  }
+  "path": "/home/data/media/music/MF DOOM/Madvillain - Madvillainy/04 - Madvillain - Bistro.mp3",
+  "is_stream": false,
+  "start_time": 1614905952,
+  "end_time": 1614906040,
+  "pause_duration": 20.578377723693848,
+  "media_duration": 67.578776,
+  "media_title": "04 - Madvillain - Bistro.mp3",
+  "percents": [
+    [1614905960, 11.150022],
+    [1614905981, 11.151141]
+  ],
+  "metadata": {}
+}
 ```
 
 This can also be called from python:
