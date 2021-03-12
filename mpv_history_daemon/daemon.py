@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # This probably isn't optmized/the minimum amount of code to do this
 # Dealing with sockets/EOFs/random drops is a pain, so this stays on the safe side
 # of validating to make sure sockets arent left dangling or data isn't
