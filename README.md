@@ -10,7 +10,7 @@ Later, I can reconstruct whether or not a file was paused/playing based on the e
 
 Requires `python3.6+`
 
-    pip install 'git+https://github.com/seanbreckenridge/mpv-history-daemon'
+    pip install mpv-history-daemon
 
 ### Known Issues
 
