@@ -8,6 +8,7 @@ requirements = Path("requirements.txt").read_text().strip().splitlines()
 
 long_description = Path("README.md").read_text()
 
+pkg = "mpv_history_daemon"
 setup(
     author="Sean Breckenridge",
     author_email="seanbrecke@gmail.com",
@@ -21,13 +22,14 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=requirements,
-    name="mpv_history_daemon",
-    packages=find_packages(include=["mpv_history_daemon"]),
+    name=pkg,
+    packages=find_packages(include=[pkg]),
+    package_data={pkg: ["py.typed"]},
     entry_points={
         "console_scripts": ["mpv-history-daemon = mpv_history_daemon.__main__:cli"]
     },
     license="http://www.apache.org/licenses/LICENSE-2.0",
     scripts=["bin/mpv_history_daemon_restart"],
     url="https://github.com/seanbreckenridge/mpv-history-daemon",
-    version="0.1.1",
+    version="0.1.2",
 )
