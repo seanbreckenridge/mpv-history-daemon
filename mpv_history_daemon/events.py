@@ -46,7 +46,7 @@ class Media(NamedTuple):
     # title of the media (if URL, could be <title>...</title> from ytdl
     media_title: Optional[str]
     # additional metadata on what % I was through the media while pausing/playing/seeking
-    percents: List[Tuple[datetime, float]]
+    actions: List[Tuple[datetime, str, float]]
     metadata: Dict[str, str]  # metadata from the file, if it exists
 
     @property
@@ -60,7 +60,7 @@ class Media(NamedTuple):
         if self.pause_duration > 1.0:
             sc = sc + 1
         sc = sc + int(len(self.metadata) / 4)
-        sc = sc + int(len(self.percents) / 8)
+        sc = sc + int(len(self.actions) / 8)
         return float(sc)
 
     @property
@@ -137,9 +137,9 @@ def _read_event_stream(p: Path) -> Results:
             pause_duration=d["pause_duration"],
             media_duration=d.get("duration"),
             media_title=d.get("media_title"),
-            percents=[
-                (parse_datetime_sec(timestamp), percent)
-                for timestamp, percent in d["percents"].items()
+            actions=[
+                (parse_datetime_sec(timestamp), data[0], data[1])
+                for timestamp, data in d["actions"].items()
             ],
             metadata=d.get("metadata", {}),
         )
@@ -234,8 +234,9 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     is_playing = True  # assume playing at beginning
     pause_duration = 0.0  # pause duration for this entry
     pause_start_time: Optional[float] = None  # if the entry is paused, when it started
-    percents: Dict[float, float] = {}
+    actions: Dict[float, Tuple[str, float]] = {}
 
+    # sort by timestamp, incase
     for dt_s in sorted(events):
         dt_float = float(dt_s)
         most_recent_time = dt_float
@@ -273,6 +274,12 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
             # shouldnt be added to media_data, affects path, but is the
             # same across the entire run of mpv
             working_dir = event_data
+        elif event_name == "is-paused":
+            # if this was paused when we connected to the socket,
+            # assume its been paused since close to it was launched
+            if event_data is True:
+                is_playing = True
+                pause_start_time = start_time
         elif event_name == "path":
             media_data["is_stream"] = False
             # if its ytdl://scheme
@@ -323,7 +330,7 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
                     # logger.warning("received resumed event while already playing?")
                     pass
             if event_data is not None and "percent-pos" in event_data:
-                percents[dt_float] = event_data["percent-pos"]
+                actions[dt_float] = (event_name, event_data["percent-pos"])
         elif event_name == "eof":
             # eof is *ALWAYS* before new data gets loaded in
             # if mpv is force quit, may not have an eof.
@@ -334,12 +341,12 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
                 pause_duration = pause_duration + (dt_float - pause_start_time)  # type: ignore[operator]
             media_data["end_time"] = dt_float
             media_data["pause_duration"] = pause_duration
-            media_data["percents"] = percents
+            media_data["actions"] = actions
             pause_duration = 0
             yield media_data
             yielded_count += 1
             media_data = {}
-            percents = {}
+            actions = {}
         elif event_name in ["mpv-quit", "final-write"]:
             # if this happened right after an eof, it can be ignored
 
@@ -351,7 +358,7 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
                     pause_duration = pause_duration + (dt_float - pause_start_time)
                 media_data["end_time"] = dt_float
                 media_data["pause_duration"] = pause_duration
-                media_data["percents"] = percents
+                media_data["actions"] = actions
                 yield media_data
                 # yielded_count += 1
             return
@@ -378,5 +385,5 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
                 )
                 media_data["end_time"] = most_recent_time
                 media_data["pause_duration"] = pause_duration
-                media_data["percents"] = percents
+                media_data["actions"] = actions
                 yield media_data

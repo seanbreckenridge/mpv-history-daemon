@@ -28,6 +28,7 @@ KNOWN_EVENTS = set(
         "socket-added",  # custom event, for when the socket was added
         "mpv-quit",
         "playlist-count",
+        "is-paused",
         "eof",
         "seek",
         "paused",
@@ -84,6 +85,7 @@ class SocketData:
             # playlist
             # playlist-count
             # working-directory
+            # is-paused
         # event-based
             # whenever a socket is played/paused
             # whenever a file changes (eof-reached) save metadata about whats being played
@@ -155,6 +157,7 @@ class SocketData:
         self.nevent("socket-added", time())
         self.nevent("working-directory", self.socket.working_directory)
         self.nevent("playlist-count", self.socket.playlist_count)
+        self.nevent("is-paused", self.socket.pause)
         # self.nevent("playlist", clean_playlist(self.socket.playlist))
 
     def poll_for_property(
