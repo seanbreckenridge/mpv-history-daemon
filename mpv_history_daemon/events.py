@@ -278,7 +278,7 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
             # if this was paused when we connected to the socket,
             # assume its been paused since close to it was launched
             if event_data is True:
-                is_playing = True
+                is_playing = False
                 pause_start_time = start_time
         elif event_name == "path":
             media_data["is_stream"] = False
