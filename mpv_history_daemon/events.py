@@ -37,7 +37,8 @@ def parse_datetime_sec(d: Union[str, float, int]) -> datetime:
 
 
 class Action(NamedTuple):
-    at: datetime
+    # this event happened this many seconds after this media was started
+    since_started: float
     action: str
     percentage: float
 
@@ -53,7 +54,7 @@ class Media(NamedTuple):
     media_title: Optional[str]
     # additional metadata on what % I was through the media while pausing/playing/seeking
     actions: List[Action]
-    metadata: Dict[str, str]  # metadata from the file, if it exists
+    metadata: Dict[str, Any]  # metadata from the file, if it exists
 
     @property
     def score(self) -> float:
@@ -135,16 +136,24 @@ def _read_event_stream(p: Path) -> Results:
             continue
         if d["end_time"] < d["start_time"]:
             logger.warning(f"End time is less than start time! {d}")
+        fdur: Optional[float] = None
+        if "duration" in d:
+            fdur = float(d["duration"])
+        start_time = parse_datetime_sec(int(d["start_time"]))
         m = Media(
             path=d["path"],
             is_stream=d["is_stream"],
-            start_time=parse_datetime_sec(int(d["start_time"])),
+            start_time=start_time,
             end_time=parse_datetime_sec(int(d["end_time"])),
-            pause_duration=d["pause_duration"],
-            media_duration=d.get("duration"),
+            pause_duration=float(d["pause_duration"]),
+            media_duration=fdur,
             media_title=d.get("media_title"),
             actions=[
-                Action(at=parse_datetime_sec(timestamp), action=data[0], percentage=data[1])
+                Action(
+                    since_started=(parse_datetime_sec(timestamp) - start_time).total_seconds(),
+                    action=data[0],
+                    percentage=data[1],
+                )
                 for timestamp, data in d["actions"].items()
             ],
             metadata=d.get("metadata", {}),
@@ -312,7 +321,7 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
         elif event_name == "duration":
             # note: path is already set (if streaming, we may not get any duration)
             assert event_data is not None
-            media_data[event_name] = event_data
+            media_data[event_name] = float(event_data)
         elif event_name in ["seek", "paused", "resumed"]:
             if event_name == "paused":
                 # if a pause event was received while mpv was still playing,
