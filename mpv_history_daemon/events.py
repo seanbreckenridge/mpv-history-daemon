@@ -36,6 +36,12 @@ def parse_datetime_sec(d: Union[str, float, int]) -> datetime:
     return datetime.fromtimestamp(int(d), tz=timezone.utc)
 
 
+class Action(NamedTuple):
+    at: datetime
+    action: str
+    percentage: float
+
+
 class Media(NamedTuple):
     path: str  # local or URL path
     is_stream: bool  # if streaming from a URL
@@ -46,7 +52,7 @@ class Media(NamedTuple):
     # title of the media (if URL, could be <title>...</title> from ytdl
     media_title: Optional[str]
     # additional metadata on what % I was through the media while pausing/playing/seeking
-    actions: List[Tuple[datetime, str, float]]
+    actions: List[Action]
     metadata: Dict[str, str]  # metadata from the file, if it exists
 
     @property
@@ -138,7 +144,7 @@ def _read_event_stream(p: Path) -> Results:
             media_duration=d.get("duration"),
             media_title=d.get("media_title"),
             actions=[
-                (parse_datetime_sec(timestamp), data[0], data[1])
+                Action(at=parse_datetime_sec(timestamp), action=data[0], percentage=data[1])
                 for timestamp, data in d["actions"].items()
             ],
             metadata=d.get("metadata", {}),
