@@ -38,20 +38,20 @@ Options:
 Some logs, to get an idea of what this captures:
 
 ```
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.3349547|mpv-launched|1598957274.334953
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.335344|working-directory|/home/sean/Music
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.3356173|playlist-count|12
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.3421223|playlist-pos|2
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.342346|path|Masayoshi Takanaka/Masayoshi Takanaka - Alone (1988)/02 - Feedback's Feel.mp3
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.3425295|media-title|Feedback's Feel
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.3427346|metadata|{'title': "Feedback's Feel", 'album': 'Alone', 'genre': 'Jazz', 'album_artist': '高中正義', 'track': '02/8', 'disc': '1/1', 'artist': '高中正義', 'date': '1981'}
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.342985|duration|351.033469
-[D 200901 03:47:54 mpv-history-daemon:115] 1598956534118491075|1598957274.343794|resumed|{'percent-pos': 66.85633}
-[D 200901 03:48:41 mpv-history-daemon:115] 1598956534118491075|1598957321.3952177|eof|None
-[D 200901 03:48:41 mpv-history-daemon:115] 1598956534118491075|1598957321.3955588|mpv-quit|1598957321.395554
-[W 200901 03:48:41 mpv-history-daemon:186] Ignoring error: [Errno 32] Broken pipe
-[D 200901 03:48:44 mpv-history-daemon:236] Connected refused for socket at /tmp/mpvsockets/1598956534118491075, removing dead socket file...
-[I 200901 03:48:44 mpv-history-daemon:314] /tmp/mpvsockets/1598956534118491075: writing to file...
+1598956534118491075|1598957274.3349547|mpv-launched|1598957274.334953
+1598956534118491075|1598957274.335344|working-directory|/home/sean/Music
+1598956534118491075|1598957274.3356173|playlist-count|12
+1598956534118491075|1598957274.3421223|playlist-pos|2
+1598956534118491075|1598957274.342346|path|Masayoshi Takanaka/Masayoshi Takanaka - Alone (1988)/02 - Feedback's Feel.mp3
+1598956534118491075|1598957274.3425295|media-title|Feedback's Feel
+1598956534118491075|1598957274.3427346|metadata|{'title': "Feedback's Feel", 'album': 'Alone', 'genre': 'Jazz', 'album_artist': '高中正義', 'track': '02/8', 'disc': '1/1', 'artist': '高中正義', 'date': '1981'}
+1598956534118491075|1598957274.342985|duration|351.033469
+1598956534118491075|1598957274.343794|resumed|{'percent-pos': 66.85633}
+1598956534118491075|1598957321.3952177|eof|None
+1598956534118491075|1598957321.3955588|mpv-quit|1598957321.395554
+Ignoring error: [Errno 32] Broken pipe
+Connected refused for socket at /tmp/mpvsockets/1598956534118491075, removing dead socket file...
+/tmp/mpvsockets/1598956534118491075: writing to file...
 ```
 
 More events would keep getting logged, as I pause/play, or the file ends and a new file starts. The key for each JSON value is the epoch time, so everything is timestamped.
