@@ -92,21 +92,13 @@ def _actually_listened_to(m: Media) -> bool:
     # (like my camera), ignore
     if not m.is_stream and m.path.startswith("/dev/"):
         return False
-    if m.is_stream:
-        # If I listened to more than 3 minutes
-        return listen_time > 180
-    else:
-        if m.media_duration is not None and m.media_duration != 0:
-            percentage_listened_to = listen_time / m.media_duration
-            # if under 10 minutes (probably a song?), if I listened to at least 60%
-            # if over, if I listened to at least 50%
-            if m.media_duration < 600:
-                return percentage_listened_to > 0.6
-            else:
-                # if I listened to more than 50% of the media duration or 30 minutes
-                return listen_time > 1800 or percentage_listened_to > 0.5
-        else:
-            return listen_time > 60  # listened to more than a minute
+    if m.media_duration is not None and m.media_duration != 0:
+        percentage_listened_to = listen_time / m.media_duration
+        # if under 10 minutes (probably a song?), if I listened to at least 75%
+        if m.media_duration < 600:
+            return percentage_listened_to > 0.75
+    # otherwise, just check if return if I listened to at least a minute
+    return listen_time > 60
 
 
 # filter out items I probably didn't listen to
@@ -150,7 +142,9 @@ def _read_event_stream(p: Path) -> Results:
             media_title=d.get("media_title"),
             actions=[
                 Action(
-                    since_started=(parse_datetime_sec(timestamp) - start_time).total_seconds(),
+                    since_started=(
+                        parse_datetime_sec(timestamp) - start_time
+                    ).total_seconds(),
                     action=data[0],
                     percentage=data[1],
                 )
@@ -158,21 +152,6 @@ def _read_event_stream(p: Path) -> Results:
             ],
             metadata=d.get("metadata", {}),
         )
-        # if percentage seems off, left hanging socket?? (not sure), skip
-        if (
-            m.is_stream is False
-            and m.media_duration is not None
-            and m.media_duration != 0
-            and not m.path.startswith("/dev/")
-        ):
-            percentage_listened_to = m.listen_time / m.media_duration
-            if percentage_listened_to > 5:
-                logger.debug(
-                    "Percentage listened to is larger than 500%, skipping {} {}".format(
-                        m.path, m.start_time
-                    )
-                )
-                continue
         key = m.path
         if key not in items:
             items[key] = m
