@@ -36,6 +36,9 @@ def parse_datetime_sec(d: Union[str, float, int]) -> datetime:
     return datetime.fromtimestamp(int(d), tz=timezone.utc)
 
 
+# changed to 'since_started' rather than using a timedelta
+# so this is cachew compliant
+# see https://github.com/karlicoss/cachew/issues/28
 class Action(NamedTuple):
     # this event happened this many seconds after this media was started
     since_started: float
@@ -58,7 +61,7 @@ class Media(NamedTuple):
 
     @property
     def score(self) -> float:
-        """Describes how much data this piece of media has, to """
+        """Describes how much data this piece of media has, to resolve conflicts"""
         sc = 0
         if self.media_title is not None:
             sc = sc + 1
@@ -324,7 +327,15 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
                     # logger.warning("received resumed event while already playing?")
                     pass
             if event_data is not None and "percent-pos" in event_data:
-                actions[dt_float] = (event_name, event_data["percent-pos"])
+                # if this is the 'resumed' event that happens when a socket first
+                # connects, dont add it to the actions
+                # using the threshhold of 10 seconds, since thats whats used in the daemon
+                if not (
+                    event_name == "resumed"
+                    and start_time is not None
+                    and dt_float - start_time < 10
+                ):
+                    actions[dt_float] = (event_name, event_data["percent-pos"])
         elif event_name == "eof":
             # eof is *ALWAYS* before new data gets loaded in
             # if mpv is force quit, may not have an eof.
