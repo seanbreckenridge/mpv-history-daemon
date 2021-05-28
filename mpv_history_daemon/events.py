@@ -24,6 +24,8 @@ from typing import (
 
 from logzero import setup_logger  # type: ignore[import]
 
+from .daemon import SCAN_TIME
+
 # TODO: better logger setup?
 loglevel: str = os.environ.get("MPV_HISTORY_EVENTS_LOGLEVEL", "info").upper()
 logger = setup_logger("mpv_history_events", level=loglevel)
@@ -227,7 +229,6 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     most_recent_time: float = 0.0
 
     # used to help determine state
-    yielded_count = 0
     is_playing = True  # assume playing at beginning
     pause_duration = 0.0  # pause duration for this entry
     pause_start_time: Optional[float] = None  # if the entry is paused, when it started
@@ -329,11 +330,16 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
             if event_data is not None and "percent-pos" in event_data:
                 # if this is the 'resumed' event that happens when a socket first
                 # connects, dont add it to the actions
-                # using the threshhold of 10 seconds, since thats whats used in the daemon
+                # also makes sure we already don't have any events. That way, if I was
+                # spamming pause/play for some reason, when this was first launched or paused
+                # some song immediately, those events are still used as normal
+                #
+                # its just the initial 'resumed' event that happens that is ignored
                 if not (
                     event_name == "resumed"
                     and start_time is not None
-                    and dt_float - start_time < 10
+                    and dt_float - start_time <= SCAN_TIME
+                    and len(actions) == 0
                 ):
                     actions[dt_float] = (event_name, event_data["percent-pos"])
         elif event_name == "eof":
@@ -349,7 +355,6 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
             media_data["actions"] = actions
             pause_duration = 0
             yield media_data
-            yielded_count += 1
             media_data = {}
             actions = {}
         elif event_name in ["mpv-quit", "final-write"]:
@@ -365,7 +370,6 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
                 media_data["pause_duration"] = pause_duration
                 media_data["actions"] = actions
                 yield media_data
-                # yielded_count += 1
             return
         else:
             logger.warning(f"Unexpected event name {event_name}")

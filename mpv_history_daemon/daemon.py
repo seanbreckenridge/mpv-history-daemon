@@ -22,6 +22,8 @@ from time import sleep, time
 from python_mpv_jsonipc import MPV  # type: ignore[import]
 from logzero import logger, logfile  # type: ignore[import]
 
+SCAN_TIME: int = 10
+
 
 KNOWN_EVENTS = set(
     [
@@ -407,7 +409,7 @@ class LoopHandler:
             self.scan_sockets()
             self.periodic_write()
             self.write_data()
-            sleep(10)
+            sleep(SCAN_TIME)
             # TODO: watch for new files instead?
 
 
