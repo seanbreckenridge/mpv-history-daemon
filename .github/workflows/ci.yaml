@@ -26,4 +26,4 @@ jobs:
           pip install mypy
       - name: Run mypy
         run: |
-          mypy ./mpv_history_daemon
+          mypy --install-types --non-interactive ./mpv_history_daemon
