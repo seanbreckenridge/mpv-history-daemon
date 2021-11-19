@@ -7,7 +7,8 @@ saved, because of a ConnectionRefusedError/BrokenPipe/general OSErrors
 logzero logs all the exceptions, incase theyre not what I expect
 most of the times, mpv will be open for more than 10 minutes, so
 the WRITE_PERIOD periodically writes will at least capture what was
-being listened to, even if *somehow* (is not common case)
+being listened to, even if *somehow* (has only happened
+when my computer suffers a random crash/shut-down)
 I lose data on what happened
 when mpv EOFd/disconnected due to a BrokenPipe.
 BrokenPipes are captured in the event_eof function
@@ -15,6 +16,7 @@ BrokenPipes are captured in the event_eof function
 
 import os
 import json
+import atexit
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from time import sleep, time
@@ -98,7 +100,6 @@ class SocketData:
                 # duration
     """
 
-    # TODO: create signal handler to write out on keyboardinterrupt?
     def __init__(self, socket: MPV, socket_loc: str, data_dir: str):
         self.socket = socket
         self.socket_loc = socket_loc
@@ -257,13 +258,14 @@ class LoopHandler:
     the main loop.
     """
 
-    def __init__(self, socket_dir: str, data_dir: str):
+    def __init__(self, socket_dir: str, data_dir: str, autostart: bool = True):
         self.data_dir: str = data_dir
         self.socket_dir: str = socket_dir
         self._socket_dir_path: Path = Path(socket_dir).expanduser().absolute()
         self.sockets: Dict[str, MPV] = {}
         self.socket_data: Dict[str, SocketData] = {}
-        self.run_loop()
+        if autostart:
+            self.run_loop()
 
     def scan_sockets(self):
         """
@@ -386,7 +388,7 @@ class LoopHandler:
                 socket_data.write_at = now + WRITE_PERIOD
                 self.debug_internals()
 
-    def write_data(self):
+    def write_data(self, force: bool = False) -> None:
         """
         Write out any completed SocketData to disk
         """
@@ -402,6 +404,14 @@ class LoopHandler:
                 self.socket_data[socket_loc].write()
                 del self.socket_data[socket_loc]
                 self.debug_internals()
+        if force:
+            # don't write additional devents to the file, just write data
+            # for every socket regardless of state. this is used if the program
+            # is crashing/etc.
+            logger.warning("forcing write to files...")
+            self.debug_internals()
+            for socket_data in self.socket_data.values():
+                socket_data.write()
 
     def run_loop(self):
         logger.debug("Starting mpv-history-daemon loop...")
@@ -410,7 +420,6 @@ class LoopHandler:
             self.periodic_write()
             self.write_data()
             sleep(SCAN_TIME)
-            # TODO: watch for new files instead?
 
 
 def run(socket_dir: str, data_dir: str, log_file: str) -> None:
@@ -421,5 +430,9 @@ def run(socket_dir: str, data_dir: str, log_file: str) -> None:
     os.makedirs(data_dir, exist_ok=True)
     assert os.path.isdir(data_dir)
     logfile(log_file, maxBytes=1e7, backupCount=1)
-    # TODO: wrap LoopHandler in an infinite loop, notify-send fatal errors?
-    LoopHandler(socket_dir, data_dir)
+    l = LoopHandler(socket_dir, data_dir, autostart=False)
+    # incase user keyboardinterrupt's or this crashes completely
+    # for some reason, write data out to files in-case it hasn't
+    # been done recently
+    atexit.register(lambda: l.write_data(force=True))
+    l.run_loop()
