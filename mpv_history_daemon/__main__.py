@@ -1,7 +1,9 @@
+import os
 import sys
 import datetime
 from pathlib import Path
 from typing import Any
+from tempfile import gettempdir
 
 import click
 import simplejson
@@ -26,7 +28,7 @@ def cli():
 @click.option(
     "--log-file",
     type=click.Path(),
-    default="/tmp/mpv-history-daemon.log",
+    default=os.path.join(gettempdir(), "mpv-history-daemon.log"),
     help="location of logfile",
 )
 def daemon(socket_dir: str, data_dir: str, log_file: str) -> None:
