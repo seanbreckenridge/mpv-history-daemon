@@ -1,9 +1,11 @@
-#!/bin/bash -x
+#!/usr/bin/env bash
 # For whatever reason, my mpv daemon stops working after running
 # continuously for a few days. This restarts it every so often
 # when its not being used for anything
 #
 # Pass the data directory for the mpv daemon as the first argument
+
+set -x
 
 declare DAEMON_PID DATA_DIR
 # capture any additional arguments to pass onto mpv-history-daemon
