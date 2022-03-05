@@ -24,7 +24,7 @@ from time import sleep, time
 from python_mpv_jsonipc import MPV  # type: ignore[import]
 from logzero import logger, logfile  # type: ignore[import]
 
-SCAN_TIME: int = 10
+SCAN_TIME: int = int(os.environ.get("MPV_HISTORY_DAEMON_SCAN_TIME", 10))
 
 
 KNOWN_EVENTS = set(
@@ -110,7 +110,11 @@ class SocketData:
         self.write_at = time() + WRITE_PERIOD
         # keep track of playlist/playlist-count, so we can use eof to determine
         # whether we should read next metadata
-        self.playlist_count = self.socket.playlist_count
+        pcount = self.socket.playlist_count
+        assert isinstance(
+            pcount, int
+        ), f"Playlist count is not an integer {self.socket_loc} {self.socket.playlist_count}"
+        self.playlist_count: int = pcount
         playlist_pos = self.socket.playlist_pos
         # incremented at the top of in store_file_metadata
         # technically this is zero-indexed, but have to deal with off-by-one errors
@@ -121,7 +125,7 @@ class SocketData:
             )
             self.playlist_index = 0
         else:
-            self.playlist_index = playlist_pos
+            self.playlist_index = int(playlist_pos)
         self.store_initial_metadata()
         self.store_file_metadata()
 
@@ -244,12 +248,13 @@ class SocketData:
         """
         Called when the user seeks in the file. Could possibly be called when a file is loaded as well
         """
-        if self.socket.percent_pos < 2:
+        pos = self.socket.percent_pos
+        if pos is not None and pos < 2:
             # logger.debug("ignoring seek because we just EOFd?")
             pass
         else:
             # save what % we seeked to
-            self.nevent("seek", {"percent-pos": self.socket.percent_pos})
+            self.nevent("seek", {"percent-pos": pos})
 
 
 class LoopHandler:
@@ -271,11 +276,12 @@ class LoopHandler:
         """
         Look for any new sockets at socket_dir, remove any dead ones
         """
-        socket_loc: str = None
+        socket_loc_scoped: Optional[str] = None  # to access this after the try/except
         try:
             # iterate through all files
             for socket_name in os.listdir(self.socket_dir):
                 socket_loc: str = os.path.join(self.socket_dir, socket_name)
+                socket_loc_scoped = socket_loc
                 if socket_loc not in self.sockets:
                     # each of these runs in a separate thread, so the while loop below doesnt block event data
                     # ConnectionRefusedError thrown here
@@ -302,21 +308,22 @@ class LoopHandler:
             # this is probably unnecessary
             for s_loc, sock_obj in self.sockets.items():
                 # update higher scope to allow usage in except block
-                socket_loc = s_loc
+                socket_loc_scoped = s_loc
                 # try to access path to possibly cause ConnectionRefusedError,
                 # removing a dead socket
                 sock_obj.path
         except (ConnectionRefusedError, BrokenPipeError):
             logger.debug(
-                f"Connected refused for socket at {socket_loc}, removing dead/dangling socket file..."
+                f"Connected refused for socket at {socket_loc_scoped}, removing dead/dangling socket file..."
             )
             # make sure its actually removed from active sockets
             # gets removed from socket_data after 10 seconds
-            if socket_loc in self.sockets:
-                self.remove_socket(socket_loc)
+            if socket_loc_scoped is not None and socket_loc_scoped in self.sockets:
+                self.remove_socket(socket_loc_scoped)
             # rm -f
             try:
-                os.remove(socket_loc)
+                if socket_loc_scoped:
+                    os.remove(socket_loc_scoped)
             except FileNotFoundError:
                 pass
 
@@ -341,14 +348,14 @@ class LoopHandler:
         # if EOF next to seek, remove the seek
 
         @sock.property_observer("pause")
-        def on_pause(_name, value):
+        def on_pause(_, value):
             if value:  # item is now paused
                 socket_data.event_paused()
             else:
                 socket_data.event_resumed()
 
         @sock.property_observer("eof-reached")
-        def on_eof(_name, value):
+        def on_eof(_, value):
             # value == False means that eof has not been reached
             if isinstance(value, bool) and not value:
                 return
@@ -359,7 +366,7 @@ class LoopHandler:
             socket_data.event_eof()
 
         @sock.property_observer("seeking")
-        def on_seek(_name, value):
+        def on_seek(_, value):
             if isinstance(value, bool) and value:
                 socket_data.event_seeking()
 
@@ -376,12 +383,12 @@ class LoopHandler:
         # (doesnt remove the file here, but should find it on the next scan_sockets call and remove it then)
 
     def debug_internals(self):
-        logger.debug("sockets {}".format(self.sockets))
-        logger.debug("socket_data {}".format(self.socket_data))
+        logger.debug(f"sockets {self.sockets}")
+        logger.debug(f"socket_data {self.socket_data}")
 
     def periodic_write(self):
         now = time()
-        for socket_loc, socket_data in self.socket_data.items():
+        for socket_data in self.socket_data.values():
             if now > socket_data.write_at:
                 logger.debug(f"{socket_data.socket_time}|running periodic write")
                 socket_data.write()
