@@ -436,7 +436,7 @@ def run(socket_dir: str, data_dir: str, log_file: str) -> None:
     assert os.path.isdir(socket_dir)
     os.makedirs(data_dir, exist_ok=True)
     assert os.path.isdir(data_dir)
-    logfile(log_file, maxBytes=1e7, backupCount=1)
+    logfile(log_file, maxBytes=int(1e7), backupCount=1)
     l = LoopHandler(socket_dir, data_dir, autostart=False)
     # incase user keyboardinterrupt's or this crashes completely
     # for some reason, write data out to files in-case it hasn't
