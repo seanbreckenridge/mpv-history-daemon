@@ -200,6 +200,9 @@ def _is_urlish(url: str) -> bool:
     return re.match(URL_REGEX, url) is not None
 
 
+homedir = os.path.expanduser("~")
+
+
 def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     """
     Takes about a dozen events receieved chronologically from the MPV
@@ -223,7 +226,7 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     media_data: Dict[str, Any] = {}
 
     # 'globals', set at the beginning
-    working_dir = os.environ["HOME"]
+    working_dir = str(homedir)
     is_first_item = True  # helps control how to handle duration
     # playlist_count = None
     most_recent_time: float = 0.0
