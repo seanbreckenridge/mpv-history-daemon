@@ -91,7 +91,7 @@ def all_history(input_files: Sequence[Path]) -> Results:
 # is to figure out if I actually watched/listened to it.
 # I may have skipped a song if it only has a couple
 # seconds between when it started/ended
-def _actually_listened_to(m: Media) -> bool:
+def _actually_listened_to(m: Media, require_listened_to_percent: float = 0.75) -> bool:
     listen_time: float = m.listen_time
     # if this is mpv streaming something from /dev/
     # (like my camera), ignore
@@ -99,9 +99,9 @@ def _actually_listened_to(m: Media) -> bool:
         return False
     if m.media_duration is not None and m.media_duration != 0:
         percentage_listened_to = listen_time / m.media_duration
-        # if under 10 minutes (probably a song?), if I listened to at least 75%
+        # if under 10 minutes (probably a song?), if I listened to at least 75% (by default)
         if m.media_duration < 600:
-            return percentage_listened_to > 0.75
+            return percentage_listened_to > require_listened_to_percent
     # otherwise, just check if return if I listened to at least a minute
     return listen_time > 60
 
