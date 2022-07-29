@@ -31,5 +31,5 @@ setup(
     license="http://www.apache.org/licenses/LICENSE-2.0",
     scripts=["bin/mpv_history_daemon_restart"],
     url="https://github.com/seanbreckenridge/mpv-history-daemon",
-    version="0.1.7",
+    version="0.1.8",
 )
