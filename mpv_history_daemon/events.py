@@ -4,7 +4,7 @@ Reads the JSON event files and constructs media files
 
 import os
 import re
-import json
+import logging
 from itertools import chain
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,7 +27,7 @@ from logzero import setup_logger  # type: ignore[import]
 from .daemon import SCAN_TIME
 
 # TODO: better logger setup?
-loglevel: str = os.environ.get("MPV_HISTORY_EVENTS_LOGLEVEL", "info").upper()
+loglevel: int = int(os.environ.get("MPV_HISTORY_EVENTS_LOGLEVEL", logging.INFO))
 logger = setup_logger("mpv_history_events", level=loglevel)
 
 EventType = str
@@ -178,12 +178,6 @@ IGNORED_EVENTS: Set[EventType] = set(
 )
 
 
-def _destructure_event(d: Dict) -> Tuple[EventType, EventData]:
-    di = d.items()
-    assert len(di) == 1, "Event not in expected format!"
-    return list(di)[0]
-
-
 URL_REGEX = re.compile(
     r"^(?:http|ftp)s?://"  # http:// or https://
     r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"  # domain...
@@ -203,12 +197,28 @@ def _is_urlish(url: str) -> bool:
 homedir = os.path.expanduser("~")
 
 
+try:
+    import orjson
+
+    def _parse_json(file: os.PathLike) -> Any:
+        with open(file) as f:
+            return orjson.loads(f.read())
+
+except ImportError:
+
+    def _parse_json(file: os.PathLike) -> Any:
+        import json
+
+        with open(file) as f:
+            return json.load(f)
+
+
 def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     """
     Takes about a dozen events receieved chronologically from the MPV
     socket, and reconstructs what I was doing while it was playing.
     """
-    events = json.loads(p.read_text())
+    events = _parse_json(p)
     # mpv socket names are created like:
     #
     # declare -a mpv_options
@@ -226,7 +236,7 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     media_data: Dict[str, Any] = {}
 
     # 'globals', set at the beginning
-    working_dir = str(homedir)
+    working_dir = homedir
     is_first_item = True  # helps control how to handle duration
     # playlist_count = None
     most_recent_time: float = 0.0
@@ -241,7 +251,7 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     for dt_s in sorted(events):
         dt_float = float(dt_s)
         most_recent_time = dt_float
-        event_name, event_data = _destructure_event(events[dt_s])
+        event_name, event_data = next(iter(events[dt_s].items()))
         if event_name in IGNORED_EVENTS:
             continue
         elif event_name == "playlist-pos":

@@ -1,6 +1,7 @@
 import os
 import sys
 import datetime
+import logging
 from pathlib import Path
 from typing import Any
 from tempfile import gettempdir
@@ -65,7 +66,7 @@ def parse(data_dir: str, all_events: bool, debug: bool) -> None:
     """
     global event_logger
     if debug:
-        event_logger = setup_logger(__name__, level="DEBUG")
+        event_logger = setup_logger(__name__, level=logging.DEBUG)
     events_func: Any = all_history if all_events else history
     ddir: Path = Path(data_dir)
     if not ddir.exists():
