@@ -22,6 +22,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=requirements,
+    python_requires=">=3.7",
+    extras_requires={"optional": ["orjson"]},
     name=pkg,
     packages=find_packages(include=[pkg]),
     package_data={pkg: ["py.typed"]},
