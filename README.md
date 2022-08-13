@@ -31,8 +31,9 @@ Usage: mpv-history-daemon daemon [OPTIONS] SOCKET_DIR DATA_DIR
   Data dir is the directory to store the history JSON files
 
 Options:
-  --log-file PATH  location of logfile
-  --help           Show this message and exit.
+  --log-file PATH         location of logfile
+  --write-period INTEGER  How often to write to files while mpv is open
+  --help                  Show this message and exit.
 ```
 
 Some logs, to get an idea of what this captures:

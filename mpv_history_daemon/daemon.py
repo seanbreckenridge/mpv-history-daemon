@@ -6,7 +6,7 @@ saved, because of a ConnectionRefusedError/BrokenPipe/general OSErrors
 
 logzero logs all the exceptions, incase theyre not what I expect
 most of the times, mpv will be open for more than 10 minutes, so
-the WRITE_PERIOD periodically writes will at least capture what was
+the write period periodically writes will at least capture what was
 being listened to, even if *somehow* (has only happened
 when my computer suffers a random crash/shut-down)
 I lose data on what happened
@@ -46,9 +46,6 @@ KNOWN_EVENTS = set(
         "final-write",  # custom event, for when the dead/dangling socket was removed, and file was written
     ]
 )
-
-# every 10 minutes
-WRITE_PERIOD = 600
 
 
 def new_event(event_name: str, event_data: Any = None) -> Dict[str, Any]:
@@ -100,14 +97,21 @@ class SocketData:
                 # duration
     """
 
-    def __init__(self, socket: MPV, socket_loc: str, data_dir: str):
+    def __init__(
+        self,
+        socket: MPV,
+        socket_loc: str,
+        data_dir: str,
+        write_period: Optional[int] = None,
+    ):
         self.socket = socket
         self.socket_loc = socket_loc
         self.data_dir = data_dir
         self.socket_time = socket_loc.split("/")[-1]
         self.events: Dict[float, Dict] = {}
+        self.write_period = write_period if write_period is not None else 600
         # write every 10 minutes, even if mpv doesnt exit
-        self.write_at = time() + WRITE_PERIOD
+        self.write_at = time() + self.write_period
         # keep track of playlist/playlist-count, so we can use eof to determine
         # whether we should read next metadata
         pcount = self.socket.playlist_count
@@ -263,9 +267,17 @@ class LoopHandler:
     the main loop.
     """
 
-    def __init__(self, socket_dir: str, data_dir: str, autostart: bool = True):
+    def __init__(
+        self,
+        socket_dir: str,
+        data_dir: str,
+        *,
+        autostart: bool = True,
+        write_period: Optional[int],
+    ):
         self.data_dir: str = data_dir
         self.socket_dir: str = socket_dir
+        self.write_period = write_period
         self._socket_dir_path: Path = Path(socket_dir).expanduser().absolute()
         self.sockets: Dict[str, MPV] = {}
         self.socket_data: Dict[str, SocketData] = {}
@@ -296,7 +308,7 @@ class LoopHandler:
                         self.socket_data[socket_loc].socket = new_sock
                     else:
                         self.socket_data[socket_loc] = SocketData(
-                            new_sock, socket_loc, self.data_dir
+                            new_sock, socket_loc, self.data_dir, self.write_period
                         )
                     self.attach_observers(socket_loc, new_sock)
                     self.debug_internals()
@@ -392,7 +404,7 @@ class LoopHandler:
             if now > socket_data.write_at:
                 logger.debug(f"{socket_data.socket_time}|running periodic write")
                 socket_data.write()
-                socket_data.write_at = now + WRITE_PERIOD
+                socket_data.write_at = now + socket_data.write_period
                 self.debug_internals()
 
     def write_data(self, force: bool = False) -> None:
@@ -429,7 +441,9 @@ class LoopHandler:
             sleep(SCAN_TIME)
 
 
-def run(socket_dir: str, data_dir: str, log_file: str) -> None:
+def run(
+    socket_dir: str, data_dir: str, log_file: str, write_period: Optional[int]
+) -> None:
     # if the daemon launched before any mpv instances
     if not os.path.exists(socket_dir):
         os.makedirs(socket_dir)
@@ -437,7 +451,7 @@ def run(socket_dir: str, data_dir: str, log_file: str) -> None:
     os.makedirs(data_dir, exist_ok=True)
     assert os.path.isdir(data_dir)
     logfile(log_file, maxBytes=int(1e7), backupCount=1)
-    lh = LoopHandler(socket_dir, data_dir, autostart=False)
+    lh = LoopHandler(socket_dir, data_dir, autostart=False, write_period=write_period)
     # incase user keyboardinterrupt's or this crashes completely
     # for some reason, write data out to files in-case it hasn't
     # been done recently
