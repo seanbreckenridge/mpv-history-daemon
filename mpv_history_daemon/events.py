@@ -35,7 +35,7 @@ EventData = Any
 
 
 def parse_datetime_sec(d: Union[str, float, int]) -> datetime:
-    return datetime.fromtimestamp(int(d), tz=timezone.utc)
+    return datetime.fromtimestamp(float(d), tz=timezone.utc)
 
 
 # changed to 'since_started' rather than using a timedelta
@@ -136,12 +136,12 @@ def _read_event_stream(p: Path) -> Results:
         fdur: Optional[float] = None
         if "duration" in d:
             fdur = float(d["duration"])
-        start_time = parse_datetime_sec(int(d["start_time"]))
+        start_time = parse_datetime_sec(float(d["start_time"]))
         m = Media(
             path=d["path"],
             is_stream=d["is_stream"],
             start_time=start_time,
-            end_time=parse_datetime_sec(int(d["end_time"])),
+            end_time=parse_datetime_sec(float(d["end_time"])),
             pause_duration=float(d["pause_duration"]),
             media_duration=fdur,
             media_title=d.get("media_title"),
@@ -226,9 +226,9 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     # exec "$mpv_path" "${mpv_options[@]}"
     #
     # get when mpv launched from the filename
-    start_time = None
+    start_time: Optional[float] = None
     try:
-        start_time = int(int(p.stem) / 1e9)
+        start_time = float(int(p.stem) / 1e9)
     except ValueError as ve:
         logger.warning(str(ve))
 
