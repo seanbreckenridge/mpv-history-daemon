@@ -1,6 +1,6 @@
 import os
-import sys
 import datetime
+import shutil
 import logging
 from pathlib import Path
 from typing import Any, Optional, Sequence, Iterator
@@ -13,6 +13,8 @@ from logzero import setup_logger  # type: ignore[import]
 from .daemon import run
 from .events import history, all_history
 from .events import logger as event_logger
+from .merge import merge_files
+from .serialize import dump_json
 
 
 @click.group()
@@ -92,6 +94,38 @@ def parse(data_files: Sequence[str], all_events: bool, debug: bool) -> None:
             namedtuple_as_object=True,
         )
     )
+
+
+@cli.command()
+@click.argument("DATA_FILES", type=click.Path(exists=True), nargs=-1, required=True)
+@click.option(
+    "--move",
+    type=click.Path(path_type=Path, file_okay=False, dir_okay=True),
+    required=False,
+    default=None,
+    help="Directory to move 'consumed' event files to, i.e., a backup incase the merge fails to write",
+)
+@click.option(
+    "--write-to",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="File to merge all data into",
+)
+def merge(data_files: Sequence[str], move: Optional[Path], write_to: Path) -> None:
+    """
+    merges multiple files into a single merged event file
+    """
+    json_files = list(_resolve_paths(data_files))
+    if move is not None:
+        move.mkdir(parents=True, exist_ok=True)
+    res = merge_files(json_files)
+    data = dump_json(res.merged_data)
+    if move is not None:
+        for old in res.consumed_files:
+            new = move / old.name
+            event_logger.info(f"Moving {old} to {new}")
+            shutil.move(old, new)
+    write_to.write_text(data)
 
 
 if __name__ == "__main__":

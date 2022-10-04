@@ -114,3 +114,43 @@ This can also be called from python:
   metadata={})
 ]
 ```
+
+### merge
+
+After a while using this, I end up with thousands of JSON files in my data directory, which does use up some unnecessary space.
+
+Those can be merged into a single file (which `parse` can still read fine) using the `merge` command:
+
+```
+$ mpv-history-daemon merge --help
+Usage: mpv-history-daemon merge [OPTIONS] DATA_FILES...
+
+  merges multiple files into a single merged event file
+
+Options:
+  --move DIRECTORY  Directory to move 'consumed' event files to, i.e., a
+                    backup incase the merge fails to write
+  --write-to PATH   File to merge all data into  [required]
+  --help            Show this message and exit.
+```
+
+Merged files look like:
+
+```json
+{
+  "mapping": {
+    "1611383220380934268.json": {"1619915695.2387643":{"socket-added":1619915695.238762}},
+    ...
+  }
+}
+```
+
+... saving the filename and the corresponding data from it
+
+It doesn't merge any event files who've recently (within an hour) been written to, to avoid possibly interfering with current files the daemon may be writing to.
+
+If you want to automatically remove files which get merged into the one file, you can use the `--move` flag, like:
+
+`mpv-history-daemon merge ~/data/mpv --move ~/.cache/mpv_removed --write-to ~/data/mpv/"merged-$(date +%s).json"`
+
+That takes any eligible files in `~/data/mpv` (merged or new event files), merges them all into `~/data/mpv/merged-...json` (unique filename using the date), and then moves all the files that were merged to `~/.cache/mpv_removed` (moving them to some temporary directory so you can review the merged file, instead of deleting)

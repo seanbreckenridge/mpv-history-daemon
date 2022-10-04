@@ -7,7 +7,7 @@ import re
 import logging
 from itertools import chain
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import (
     Iterator,
     Sequence,
@@ -85,7 +85,7 @@ Results = Iterator[Media]
 
 
 def all_history(input_files: Sequence[Path]) -> Results:
-    yield from chain(*map(_read_event_stream, input_files))
+    yield from chain(*map(_parse_history_file, input_files))
 
 
 # use some of the context of what this piece of media
@@ -119,7 +119,18 @@ def history(
     yield from filter(filter_function, all_history(input_files))
 
 
-def _read_event_stream(p: Path) -> Results:
+def _parse_history_file(p: Path) -> Results:
+    event_data = parse_json_file(p)
+    # mapping signifies this is a merged file, whose key is the old filename
+    # and value is the JSON data
+    if "mapping" in event_data:
+        for name, data in event_data["mapping"].items():
+            yield from _read_event_stream(data, filename=name)
+    else:
+        yield from _read_event_stream(event_data, filename=str(p))
+
+
+def _read_event_stream(events: Any, filename: str) -> Results:
     # if theres a conflict, keep a 'score' by adding non-null fields on an item,
     # and return the one that has the most
     #
@@ -127,7 +138,7 @@ def _read_event_stream(p: Path) -> Results:
     # use 'path' as a primary key to remove possible
     # duplicate event data
     items: Dict[str, Media] = {}
-    for d in _reconstruct_event_stream(p):
+    for d in _reconstruct_event_stream(events, filename=filename):
         # required keys
         if not REQUIRED_KEYS.issubset(set(d)):
             # logger.debug("Doesnt have required keys, ignoring...")
@@ -198,12 +209,11 @@ def _is_urlish(url: str) -> bool:
 homedir = os.path.expanduser("~")
 
 
-def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
+def _reconstruct_event_stream(events: Any, filename: str) -> Iterator[Dict[str, Any]]:
     """
     Takes about a dozen events receieved chronologically from the MPV
     socket, and reconstructs what I was doing while it was playing.
     """
-    events = parse_json_file(p)
     # mpv socket names are created like:
     #
     # declare -a mpv_options
@@ -213,7 +223,7 @@ def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     # get when mpv launched from the filename
     start_time: Optional[float] = None
     try:
-        start_time = float(int(p.stem) / 1e9)
+        start_time = float(int(PurePath(filename).stem) / 1e9)
     except ValueError as ve:
         logger.warning(str(ve))
 
