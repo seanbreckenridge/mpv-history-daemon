@@ -3,7 +3,7 @@ import sys
 import datetime
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Sequence, Iterator
 from tempfile import gettempdir
 
 import click
@@ -54,8 +54,16 @@ def default_encoder(o: Any) -> Any:
     raise TypeError(f"{o} of type {type(o)} is not serializable")
 
 
+def _resolve_paths(paths: Sequence[str]) -> Iterator[Path]:
+    for p in map(Path, paths):
+        if p.is_dir():
+            yield from p.iterdir()
+        else:
+            yield p
+
+
 @cli.command()
-@click.argument("DATA_DIR")
+@click.argument("DATA_FILES", type=click.Path(exists=True), nargs=-1, required=True)
 @click.option(
     "--all-events",
     is_flag=True,
@@ -68,7 +76,7 @@ def default_encoder(o: Any) -> Any:
     default=False,
     help="Increase log verbosity/print warnings while parsing JSON files",
 )
-def parse(data_dir: str, all_events: bool, debug: bool) -> None:
+def parse(data_files: Sequence[str], all_events: bool, debug: bool) -> None:
     """
     Takes the data directory and parses events into Media
     """
@@ -76,16 +84,10 @@ def parse(data_dir: str, all_events: bool, debug: bool) -> None:
     if debug:
         event_logger = setup_logger(__name__, level=logging.DEBUG)
     events_func: Any = all_history if all_events else history
-    ddir: Path = Path(data_dir)
-    if not ddir.exists():
-        click.echo(f"{data_dir} does not exist", err=True)
-        sys.exit(1)
-    if not ddir.is_dir():
-        click.echo(f"{data_dir} is not a directory", err=True)
-        sys.exit(1)
+    json_files = list(_resolve_paths(data_files))
     click.echo(
         simplejson.dumps(
-            list(events_func(list(ddir.iterdir()))),
+            list(events_func(json_files)),
             default=default_encoder,
             namedtuple_as_object=True,
         )
