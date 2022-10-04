@@ -49,4 +49,7 @@ def merge_files(files: List[Path], mtime_seconds_since: int = 3600) -> MergeResu
         merged[event_f.name] = event_data
         consumed_files.append(event_f)
 
-    return MergeResult(merged_data={"mapping": merged}, consumed_files=consumed_files)
+    return MergeResult(
+        merged_data={"mapping": dict(sorted(merged.items()))},
+        consumed_files=consumed_files,
+    )
