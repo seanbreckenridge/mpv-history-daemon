@@ -124,7 +124,7 @@ def merge(data_files: Sequence[str], move: Optional[Path], write_to: Path) -> No
         for old in res.consumed_files:
             new = move / old.name
             event_logger.info(f"Moving {old} to {new}")
-            shutil.move(old, new)
+            shutil.move(str(old), str(new))
     write_to.write_text(data)
 
 
