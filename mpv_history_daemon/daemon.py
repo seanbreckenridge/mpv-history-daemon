@@ -15,7 +15,6 @@ BrokenPipes are captured in the event_eof function
 """
 
 import os
-import json
 import atexit
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -23,6 +22,8 @@ from time import sleep, time
 
 from python_mpv_jsonipc import MPV  # type: ignore[import]
 from logzero import logger, logfile  # type: ignore[import]
+
+from .serialize import dump_json
 
 SCAN_TIME: int = int(os.environ.get("MPV_HISTORY_DAEMON_SCAN_TIME", 10))
 
@@ -153,10 +154,11 @@ class SocketData:
     __str__ = __repr__
 
     def write(self):
+        serialized = dump_json(self.events)
         with open(
             os.path.join(self.data_dir, f"{self.socket_time}.json"), "w"
         ) as event_f:
-            json.dump(self.events, event_f)
+            event_f.write(serialized)
 
     def nevent(self, event_name: str, event_data: Optional[Any] = None) -> None:
         """add an event"""

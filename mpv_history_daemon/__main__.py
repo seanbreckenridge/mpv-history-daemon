@@ -38,7 +38,9 @@ def cli():
     default=None,
     help="How often to write to files while mpv is open",
 )
-def daemon(socket_dir: str, data_dir: str, log_file: str, write_period: Optional[int]) -> None:
+def daemon(
+    socket_dir: str, data_dir: str, log_file: str, write_period: Optional[int]
+) -> None:
     """
     Socket dir is the directory with mpv sockets (/tmp/mpvsockets, probably)
     Data dir is the directory to store the history JSON files

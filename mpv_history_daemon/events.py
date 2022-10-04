@@ -25,6 +25,7 @@ from typing import (
 from logzero import setup_logger  # type: ignore[import]
 
 from .daemon import SCAN_TIME
+from .serialize import parse_json_file
 
 # TODO: better logger setup?
 loglevel: int = int(os.environ.get("MPV_HISTORY_EVENTS_LOGLEVEL", logging.INFO))
@@ -197,28 +198,12 @@ def _is_urlish(url: str) -> bool:
 homedir = os.path.expanduser("~")
 
 
-try:
-    import orjson
-
-    def _parse_json(file: os.PathLike) -> Any:
-        with open(file) as f:
-            return orjson.loads(f.read())
-
-except ImportError:
-
-    def _parse_json(file: os.PathLike) -> Any:
-        import json
-
-        with open(file) as f:
-            return json.load(f)
-
-
 def _reconstruct_event_stream(p: Path) -> Iterator[Dict[str, Any]]:
     """
     Takes about a dozen events receieved chronologically from the MPV
     socket, and reconstructs what I was doing while it was playing.
     """
-    events = _parse_json(p)
+    events = parse_json_file(p)
     # mpv socket names are created like:
     #
     # declare -a mpv_options
