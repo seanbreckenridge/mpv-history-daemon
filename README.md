@@ -145,7 +145,7 @@ Merged files look like:
 }
 ```
 
-... saving the filename and the corresponding data from it
+... saving the filename and the corresponding data from the original files
 
 It doesn't merge any event files who've recently (within an hour) been written to, to avoid possibly interfering with current files the daemon may be writing to.
 
