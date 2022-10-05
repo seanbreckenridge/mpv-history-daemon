@@ -103,7 +103,7 @@ def parse(data_files: Sequence[str], all_events: bool, debug: bool) -> None:
     type=click.Path(path_type=Path, file_okay=False, dir_okay=True),
     required=False,
     default=None,
-    help="Directory to move 'consumed' event files to, i.e., a backup incase the merge fails to write",
+    help="Directory to move 'consumed' event files to, i.e., a 'remove' these from the source directory once they've been merged",
 )
 @click.option(
     "--write-to",
@@ -111,14 +111,22 @@ def parse(data_files: Sequence[str], all_events: bool, debug: bool) -> None:
     required=True,
     help="File to merge all data into",
 )
-def merge(data_files: Sequence[str], move: Optional[Path], write_to: Path) -> None:
+@click.option(
+    "--mtime-seconds",
+    type=int,
+    default=3600,
+    help="If files have been modified in this amount of time, don't merge them",
+)
+def merge(
+    data_files: Sequence[str], move: Optional[Path], write_to: Path, mtime_seconds: int
+) -> None:
     """
     merges multiple files into a single merged event file
     """
     json_files = list(_resolve_paths(data_files))
     if move is not None:
         move.mkdir(parents=True, exist_ok=True)
-    res = merge_files(json_files)
+    res = merge_files(json_files, mtime_seconds_since=mtime_seconds)
     data = dump_json(res.merged_data)
     if move is not None:
         for old in res.consumed_files:

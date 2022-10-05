@@ -122,16 +122,18 @@ After a while using this, I end up with thousands of JSON files in my data direc
 Those can be merged into a single file (which `parse` can still read fine) using the `merge` command:
 
 ```
-$ mpv-history-daemon merge --help
 Usage: mpv-history-daemon merge [OPTIONS] DATA_FILES...
 
   merges multiple files into a single merged event file
 
 Options:
-  --move DIRECTORY  Directory to move 'consumed' event files to, i.e., a
-                    backup incase the merge fails to write
-  --write-to PATH   File to merge all data into  [required]
-  --help            Show this message and exit.
+  --move DIRECTORY         Directory to move 'consumed' event files to, i.e.,
+                           a 'remove' these from the source directory once
+                           they've been merged
+  --write-to PATH          File to merge all data into  [required]
+  --mtime-seconds INTEGER  If files have been modified in this amount of time,
+                           don't merge them
+  --help                   Show this message and exit.
 ```
 
 Merged files look like:
