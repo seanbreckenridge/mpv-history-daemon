@@ -154,3 +154,5 @@ If you want to automatically remove files which get merged into the one file, yo
 `mpv-history-daemon merge ~/data/mpv --move ~/.cache/mpv_removed --write-to ~/data/mpv/"merged-$(date +%s).json"`
 
 That takes any eligible files in `~/data/mpv` (merged or new event files), merges them all into `~/data/mpv/merged-...json` (unique filename using the date), and then moves all the files that were merged to `~/.cache/mpv_removed` (moving them to some temporary directory so you can review the merged file, instead of deleting)
+
+My personal script which does this is synced up [here](https://github.com/seanbreckenridge/bleanser/blob/master/bin/merge-mpv-history)
