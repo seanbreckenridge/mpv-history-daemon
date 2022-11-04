@@ -117,7 +117,7 @@ This can also be called from python:
 
 ### merge
 
-After a while using this, I end up with thousands of JSON files in my data directory, which does use up some unnecessary space.
+After a while using this, I end up with thousands of JSON files in my data directory, which does use up some unnecessary space, and increases time to parse since it has to open thousands of files.
 
 Those can be merged into a single file (which `parse` can still read fine) using the `merge` command:
 
