@@ -45,6 +45,6 @@ trap cleanup EXIT
 
 start_daemon "$@"
 while true; do
-	sleep 3h
+	sleep "${MPV_DAEMON_SLEEP_TIME:-3h}"
 	attempt_restart "$@"
 done
