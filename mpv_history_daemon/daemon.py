@@ -84,7 +84,6 @@ class SocketData:
 
     Want to save:
         # at mpv launch:
-            # playlist
             # playlist-count
             # working-directory
             # is-paused
