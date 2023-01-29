@@ -17,7 +17,7 @@ BrokenPipes are captured in the event_eof function
 import os
 import atexit
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Type
 from time import sleep, time
 
 from python_mpv_jsonipc import MPV  # type: ignore[import]
@@ -152,7 +152,7 @@ class SocketData:
 
     __str__ = __repr__
 
-    def write(self):
+    def write(self) -> None:
         serialized = dump_json(self.events)
         with open(
             os.path.join(self.data_dir, f"{self.socket_time}.json"), "w"
@@ -165,7 +165,7 @@ class SocketData:
         logger.debug(f"{self.socket_time}|{ct}|{event_name}|{event_data}")
         self.events[ct] = new_event(event_name, event_data)
 
-    def store_initial_metadata(self):
+    def store_initial_metadata(self) -> None:
         self.nevent("socket-added", time())
         self.nevent("working-directory", self.socket.working_directory)
         self.nevent("playlist-count", self.socket.playlist_count)
@@ -192,7 +192,7 @@ class SocketData:
         else:
             logger.warning(f"{self.socket_loc} Couldn't poll for {event_name}")
 
-    def store_file_metadata(self):
+    def store_file_metadata(self) -> None:
         """
         Called when EOF is reached (so, another file starts)
         """
@@ -231,7 +231,7 @@ class SocketData:
         """
         self.nevent("paused", {"percent-pos": self.socket.percent_pos})
 
-    def event_eof(self):
+    def event_eof(self) -> None:
         """
         Called when the 'eof' event happens. Doesn't necessarily mean mpv exits
         Could be going to the next song in the current playlist
@@ -249,7 +249,7 @@ class SocketData:
             if not isinstance(e, ConnectionRefusedError):
                 logger.exception(e)
 
-    def event_seeking(self):
+    def event_seeking(self) -> None:
         """
         Called when the user seeks in the file. Could possibly be called when a file is loaded as well
         """
@@ -275,17 +275,19 @@ class LoopHandler:
         *,
         autostart: bool = True,
         write_period: Optional[int],
+        socket_data_cls: Type[SocketData] = SocketData,
     ):
         self.data_dir: str = data_dir
         self.socket_dir: str = socket_dir
         self.write_period = write_period
         self._socket_dir_path: Path = Path(socket_dir).expanduser().absolute()
         self.sockets: Dict[str, MPV] = {}
+        self.socket_data_cls = socket_data_cls
         self.socket_data: Dict[str, SocketData] = {}
         if autostart:
             self.run_loop()
 
-    def scan_sockets(self):
+    def scan_sockets(self) -> None:
         """
         Look for any new sockets at socket_dir, remove any dead ones
         """
@@ -308,7 +310,7 @@ class LoopHandler:
                     if socket_loc in self.socket_data:
                         self.socket_data[socket_loc].socket = new_sock
                     else:
-                        self.socket_data[socket_loc] = SocketData(
+                        self.socket_data[socket_loc] = self.socket_data_cls(
                             new_sock, socket_loc, self.data_dir, self.write_period
                         )
                     self.attach_observers(socket_loc, new_sock)
@@ -395,11 +397,11 @@ class LoopHandler:
             )
         # (doesnt remove the file here, but should find it on the next scan_sockets call and remove it then)
 
-    def debug_internals(self):
+    def debug_internals(self) -> None:
         logger.debug(f"sockets {self.sockets}")
         logger.debug(f"socket_data {self.socket_data}")
 
-    def periodic_write(self):
+    def periodic_write(self) -> None:
         now = time()
         for socket_data in self.socket_data.values():
             if now > socket_data.write_at:
@@ -433,7 +435,7 @@ class LoopHandler:
             for socket_data in self.socket_data.values():
                 socket_data.write()
 
-    def run_loop(self):
+    def run_loop(self) -> None:
         logger.debug("Starting mpv-history-daemon loop...")
         while True:
             self.scan_sockets()
@@ -443,7 +445,11 @@ class LoopHandler:
 
 
 def run(
-    socket_dir: str, data_dir: str, log_file: str, write_period: Optional[int]
+    socket_dir: str,
+    data_dir: str,
+    log_file: str,
+    write_period: Optional[int],
+    socket_data_cls: Type[SocketData],
 ) -> None:
     # if the daemon launched before any mpv instances
     if not os.path.exists(socket_dir):
@@ -452,7 +458,7 @@ def run(
     os.makedirs(data_dir, exist_ok=True)
     assert os.path.isdir(data_dir)
     logfile(log_file, maxBytes=int(1e7), backupCount=1)
-    lh = LoopHandler(socket_dir, data_dir, autostart=False, write_period=write_period)
+    lh = LoopHandler(socket_dir, data_dir, autostart=False, write_period=write_period, socket_data_cls=socket_data_cls)
     # incase user keyboardinterrupt's or this crashes completely
     # for some reason, write data out to files in-case it hasn't
     # been done recently

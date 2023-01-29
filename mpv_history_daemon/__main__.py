@@ -10,7 +10,7 @@ import click
 import simplejson
 from logzero import setup_logger  # type: ignore[import]
 
-from .daemon import run
+from .daemon import run, SocketData
 from .events import history, all_history
 from .events import logger as event_logger
 from .merge import merge_files
@@ -47,7 +47,13 @@ def daemon(
     Socket dir is the directory with mpv sockets (/tmp/mpvsockets, probably)
     Data dir is the directory to store the history JSON files
     """
-    run(socket_dir, data_dir, log_file, write_period)
+    run(
+        socket_dir=socket_dir,
+        data_dir=data_dir,
+        log_file=log_file,
+        write_period=write_period,
+        socket_data_cls=SocketData,
+    )
 
 
 def default_encoder(o: Any) -> Any:
