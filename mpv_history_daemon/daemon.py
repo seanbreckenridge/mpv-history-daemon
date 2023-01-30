@@ -388,9 +388,15 @@ class LoopHandler:
     def remove_socket(self, socket_loc: str) -> None:
         if socket_loc in self.sockets:
             logger.debug(f"Removing socket {socket_loc}")
-            del self.sockets[socket_loc]
             # write quit event
-            self.socket_data[socket_loc].nevent("mpv-quit", time())
+            try:
+                self.socket_data[socket_loc].nevent("mpv-quit", time())
+            except KeyError:
+                pass
+            try:
+                del self.sockets[socket_loc]
+            except KeyError:
+                pass
         else:
             logger.warning(
                 "called remove socket, but socket_loc doesnt exist in self.sockets"
@@ -459,7 +465,13 @@ def run(
     os.makedirs(data_dir, exist_ok=True)
     assert os.path.isdir(data_dir)
     logfile(log_file, maxBytes=int(1e7), backupCount=1)
-    lh = LoopHandler(socket_dir, data_dir, autostart=False, write_period=write_period, socket_data_cls=socket_data_cls)
+    lh = LoopHandler(
+        socket_dir,
+        data_dir,
+        autostart=False,
+        write_period=write_period,
+        socket_data_cls=socket_data_cls,
+    )
     # incase user keyboardinterrupt's or this crashes completely
     # for some reason, write data out to files in-case it hasn't
     # been done recently
