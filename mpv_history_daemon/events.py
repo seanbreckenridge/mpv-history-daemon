@@ -130,7 +130,9 @@ def _parse_history_file(p: Path) -> Results:
         yield from _read_event_stream(event_data, filename=str(p))
 
 
-def _read_event_stream(events: Any, filename: str) -> Results:
+def _read_event_stream(
+    events: Any, filename: str, *, allow_if_playing_for: int = 60
+) -> Results:
     # if theres a conflict, keep a 'score' by adding non-null fields on an item,
     # and return the one that has the most
     #
@@ -138,7 +140,9 @@ def _read_event_stream(events: Any, filename: str) -> Results:
     # use 'path' as a primary key to remove possible
     # duplicate event data
     items: Dict[str, Media] = {}
-    for d in _reconstruct_event_stream(events, filename=filename):
+    for d in _reconstruct_event_stream(
+        events, filename=filename, allow_if_playing_for=allow_if_playing_for
+    ):
         # required keys
         if not REQUIRED_KEYS.issubset(set(d)):
             # logger.debug("Doesnt have required keys, ignoring...")
@@ -209,7 +213,9 @@ def _is_urlish(url: str) -> bool:
 homedir = os.path.expanduser("~")
 
 
-def _reconstruct_event_stream(events: Any, filename: str) -> Iterator[Dict[str, Any]]:
+def _reconstruct_event_stream(
+    events: Any, filename: str, *, allow_if_playing_for: int
+) -> Iterator[Dict[str, Any]]:
     """
     Takes about a dozen events receieved chronologically from the MPV
     socket, and reconstructs what I was doing while it was playing.
@@ -389,9 +395,9 @@ def _reconstruct_event_stream(events: Any, filename: str) -> Iterator[Dict[str, 
         if not REQUIRED_KEYS.issubset(set(media_data)):
             logger.debug("Ignoring leftover data... {}".format(media_data))
         else:
-            # if we got through all the keys, and this has been playing for at least a minute,
+            # if we got through all the keys, and this has been playing for at least a minute (or allow_if_playing_for)
             # even though this is sorta broken, log it anyways
-            if most_recent_time - media_data["start_time"] > 60:
+            if most_recent_time - int(media_data["start_time"]) > allow_if_playing_for:
                 # if it crashed while it was paused
                 if not is_playing and pause_start_time is not None:
                     pause_duration = pause_duration + (

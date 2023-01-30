@@ -437,6 +437,7 @@ class LoopHandler:
 
     def run_loop(self) -> None:
         logger.debug("Starting mpv-history-daemon loop...")
+        logger.debug(f"Using socket class {self.socket_data_cls}")
         while True:
             self.scan_sockets()
             self.periodic_write()

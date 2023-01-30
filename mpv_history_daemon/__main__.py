@@ -2,8 +2,9 @@ import os
 import datetime
 import shutil
 import logging
+import importlib
 from pathlib import Path
-from typing import Any, Optional, Sequence, Iterator
+from typing import Any, Optional, Sequence, Iterator, Optional
 from tempfile import gettempdir
 
 import click
@@ -40,19 +41,35 @@ def cli():
     default=None,
     help="How often to write to files while mpv is open",
 )
+@click.option(
+    "--socket-class-qualname",
+    type=str,
+    default=None,
+    help="Fully qualified name of the class to use for socket data, e.g., 'mpv_history_daemon.daemon.SocketData'. This imports the class and uses it for socket data.",
+)
 def daemon(
-    socket_dir: str, data_dir: str, log_file: str, write_period: Optional[int]
+    socket_dir: str,
+    data_dir: str,
+    log_file: str,
+    write_period: Optional[int],
+    socket_class_qualname: Optional[str],
 ) -> None:
     """
     Socket dir is the directory with mpv sockets (/tmp/mpvsockets, probably)
     Data dir is the directory to store the history JSON files
     """
+    socketclass = SocketData
+    if socket_class_qualname is not None:
+        module_name, class_name = socket_class_qualname.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        socketclass = getattr(module, class_name)
+        assert issubclass(socketclass, SocketData)
     run(
         socket_dir=socket_dir,
         data_dir=data_dir,
         log_file=log_file,
         write_period=write_period,
-        socket_data_cls=SocketData,
+        socket_data_cls=socketclass,
     )
 
 
