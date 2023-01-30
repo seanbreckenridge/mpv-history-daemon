@@ -59,6 +59,12 @@ More events would keep getting logged, as I pause/play, or the file ends and a n
 
 By default, this scans the socket directory every 10 seconds -- to increase that you can set the `MPV_HISTORY_DAEMON_SCAN_TIME` environment variable, e.g. `MPV_HISTORY_DAEMON_SCAN_TIME=5`
 
+#### custom SocketData class
+
+You can pass a custom socket data class with to `daemon` with `--socket-class-qualname`, which lets you customize the behaviour of the `SocketData` class. For example, I override particular events to intercept data and send it to my [`currently_listening`](https://github.com/seanbreckenridge/currently_listening) server, which among other things displays my currently playing mpv song in discord:
+
+![demo discord image](https://github.com/seanbreckenridge/currently_listening/blob/main/.github/discord.png?raw=true)
+
 ### parse
 
 The daemon saves the raw event data above in JSON files, which can then be parsed into individual instances of media:
