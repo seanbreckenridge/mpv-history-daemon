@@ -246,7 +246,7 @@ class SocketData:
         # possible errors thrown: BrokenPipeError, OSError
         except Exception as e:
             logger.warning(f"Ignoring error: {e}")
-            if not isinstance(e, ConnectionRefusedError):
+            if not isinstance(e, (ConnectionRefusedError, TimeoutError)):
                 logger.exception(e)
 
     def event_seeking(self) -> None:
