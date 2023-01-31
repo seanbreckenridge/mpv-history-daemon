@@ -61,7 +61,7 @@ By default, this scans the socket directory every 10 seconds -- to increase that
 
 #### custom SocketData class
 
-You can pass a custom socket data class with to `daemon` with `--socket-class-qualname`, which lets you customize the behaviour of the `SocketData` class. For example, I override particular events to intercept data and send it to my [`currently_listening`](https://github.com/seanbreckenridge/currently_listening) server, which among other things displays my currently playing mpv song in discord:
+You can pass a custom socket data class with to `daemon` with `--socket-class-qualname`, which lets you customize the behaviour of the `SocketData` class. For example, I override particular events (see [`SocketDataServer`](https://github.com/seanbreckenridge/currently_listening/blob/main/currently_listening_py/currently_listening_py/socket_data.py)) to intercept data and send it to my [`currently_listening`](https://github.com/seanbreckenridge/currently_listening) server, which among other things displays my currently playing mpv song in discord:
 
 ![demo discord image](https://github.com/seanbreckenridge/currently_listening/blob/main/.github/discord.png?raw=true)
 
