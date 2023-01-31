@@ -26,18 +26,22 @@ mpv_active() {
 	pgrep -x mpv
 }
 
+logdate() {
+	date '+%Y-%m-%dT%H-%M-%S'
+}
+
 attempt_restart() {
 	if mpv_active; then
-		echo "Found active mpv instance, ignoring..."
+		echo "$(logdate): Found active mpv instance, ignoring..."
 	else
-		echo "No mpv instances active, restarting mpv daemon..."
+		echo "$(logdate): No mpv instances active, restarting mpv daemon..."
 		kill "${DAEMON_PID}"
 		start_daemon "$@"
 	fi
 }
 
 cleanup() {
-	echo "Killing background process..."
+	echo "$(logdate): Killing background process..."
 	kill "${DAEMON_PID}"
 }
 
