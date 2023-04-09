@@ -252,6 +252,7 @@ def _reconstruct_event_stream(
     for dt_s in sorted(events):
         dt_float = float(dt_s)
         most_recent_time = dt_float
+        # the value is a dictionary of event_name (str) -> event_data (depends on the event)
         event_name, event_data = next(iter(events[dt_s].items()))
         if event_name in IGNORED_EVENTS:
             continue
