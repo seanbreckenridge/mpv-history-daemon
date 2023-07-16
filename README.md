@@ -1,6 +1,6 @@
 # mpv-history-daemon
 
-This functions by connecting to socket files created by [`mpv-sockets`](https://github.com/seanbreckenridge/mpv-sockets). That launches mpv with unique mpv sockets at `/tmp/mpvsockets/`.
+This functions by connecting to socket files created by [`mpv-sockets`](https://github.com/seanbreckenridge/mpv-sockets). The `mpv` script there launches mpv with unique mpv sockets at `/tmp/mpvsockets/`.
 
 For each `mpv` socket, this attaches event handlers which tell me whenever a file in a playlist ends, whenever I seek (skip), what the current working directory/path is, and whenever I play/pause an item. Once the `mpv` instance quits, it saves all the events to a JSON file.
 
@@ -14,7 +14,7 @@ Requires `python3.7+`
 
 ### Known Issues
 
-For whatever reason, this stops working after a few days of continuous use, so I wrap this with another script which restarts this every so often. I would recommend starting this by running:
+For whatever reason, this stops working after a few days of continuous use (perhaps because of my laptop suspending?), so I wrap this with another script which restarts this every so often if there are no open `mpv` instances. I would recommend starting this by running:
 
 ```
 mpv_history_daemon_restart /your/data/dir
