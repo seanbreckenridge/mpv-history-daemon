@@ -76,6 +76,12 @@ class MediaAllowed:
         self.strict = strict
         self._logger = logger
 
+    def __str__(self) -> str:
+        return f"MediaAllowed(allow_prefixes={self.allow_prefixes}, ignored_prefixes={self.ignored_prefixes}, allow_extensions={self.allow_extensions}, ignore_extensions={self.ignore_extensions}, allow_stream={self.allow_stream}, strict={self.strict})"
+
+    def __repr__(self) -> str:
+        return str(self)
+
     @staticmethod
     def _fix_extension(ext: str) -> str:
         if ext.startswith("."):
