@@ -106,7 +106,7 @@ class MediaAllowed:
             if self.allow_extensions and ext not in self.allow_extensions:
                 if self._logger:
                     self._logger.warning(
-                        f"Media {media.path} has an extension {ext} not in allowed extensions {self.allow_extensions}"
+                        f"Media {media.path} has an extension {ext} not in allowed extensions={self.allow_extensions} or ignored extensions={self.ignore_extensions}"
                     )
                 return False
 
