@@ -22,7 +22,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=requirements,
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     extras_require={"optional": ["orjson"]},
     name=pkg,
     packages=find_packages(include=[pkg]),
@@ -33,5 +33,5 @@ setup(
     license="http://www.apache.org/licenses/LICENSE-2.0",
     scripts=["bin/mpv_history_daemon_restart"],
     url="https://github.com/seanbreckenridge/mpv-history-daemon",
-    version="0.2.1",
+    version="0.2.2",
 )
