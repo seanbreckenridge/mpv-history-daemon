@@ -6,6 +6,7 @@ As these have no dependencies, locating it here makes it easier to use in lots o
 
 import os
 import logging
+from urllib.parse import urlparse
 from typing import Dict, Optional, Tuple, Any, NamedTuple, List
 
 from .events import Media
@@ -88,6 +89,16 @@ class MediaAllowed:
             return ext.lower()
         return f".{ext}".lower()
 
+    @staticmethod
+    def _parse_url_extension(ext: str) -> str:
+        """
+        recieves something like .ext?query=1&query2=2, returns .ext
+        """
+        if "?" in ext:
+            parts = urlparse(ext)
+            return parts.path
+        return ext
+
     @classmethod
     def defualt_ignore(cls) -> List[str]:
         return ["/tmp", "/dev"]
@@ -102,7 +113,7 @@ class MediaAllowed:
         # allow/ignore based on extension
         _, ext = os.path.splitext(media.path)
         if ext:
-            ext = ext.lower()
+            ext = self.__class__._parse_url_extension(ext.lower())
             if ext in self.ignore_extensions:
                 if self._logger:
                     self._logger.debug(
@@ -126,7 +137,7 @@ class MediaAllowed:
         ):
             if self._logger:
                 self._logger.debug(
-                    f"Media {media.path} is in ignore prefixes {self.ignored_prefixes}"
+                    f"Media {media.path} is in ignore prefixes {self.ignored_prefixes}, ignoring..."
                 )
             return False
 
