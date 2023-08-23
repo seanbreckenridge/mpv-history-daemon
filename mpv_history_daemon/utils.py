@@ -64,7 +64,7 @@ class MediaAllowed:
     ):
         self.allow_prefixes = allow_prefixes if allow_prefixes else []
         self.ignored_prefixes = ignore_prefixes if ignore_prefixes else []
-        self.ignored_prefixes.extend(self.__class__.defualt_ignore())
+        self.ignored_prefixes.extend(self.__class__.default_ignore())
         ignored_ext = ignore_extensions if ignore_extensions else []
         self.ignore_extensions = [
             self.__class__._fix_extension(ext) for ext in ignored_ext
@@ -92,7 +92,7 @@ class MediaAllowed:
     @staticmethod
     def _parse_url_extension(ext: str) -> str:
         """
-        recieves something like .ext?query=1&query2=2, returns .ext
+        receives something like .ext?query=1&query2=2, returns .ext
         """
         if "?" in ext:
             parts = urlparse(ext)
@@ -100,7 +100,7 @@ class MediaAllowed:
         return ext
 
     @classmethod
-    def defualt_ignore(cls) -> List[str]:
+    def default_ignore(cls) -> List[str]:
         return ["/tmp", "/dev"]
 
     def is_allowed(self, media: Media) -> bool:
