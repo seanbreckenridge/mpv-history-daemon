@@ -13,9 +13,9 @@ from logzero import setup_logger  # type: ignore[import]
 
 from .daemon import run, SocketData
 from .events import history, all_history
-from .events import logger as event_logger
 from .merge import merge_files
 from .serialize import dump_json
+from . import events as events_module
 
 
 @click.group()
@@ -105,9 +105,8 @@ def parse(data_files: Sequence[str], all_events: bool, debug: bool) -> None:
     """
     Takes the data directory and parses events into Media
     """
-    global event_logger
     if debug:
-        event_logger = setup_logger(__name__, level=logging.DEBUG)
+        events_module.logger = setup_logger("mpv_history_events", level=logging.DEBUG)
     events_func: Any = all_history if all_events else history
     json_files = list(_resolve_paths(data_files))
     click.echo(
@@ -154,7 +153,7 @@ def merge(
     if move is not None:
         for old in res.consumed_files:
             new = move / old.name
-            event_logger.info(f"Moving {old} to {new}")
+            events_module.logger.info(f"Moving {old} to {new}")
             shutil.move(str(old), str(new))
     write_to.write_text(data)
 
