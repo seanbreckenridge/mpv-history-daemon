@@ -46,7 +46,7 @@ class Action(NamedTuple):
     # this event happened this many seconds after this media was started
     since_started: float
     action: str
-    percentage: float
+    percentage: Optional[float]  # this can be None if its a livestream, those dont have a percent-pos
 
 
 class Media(NamedTuple):
