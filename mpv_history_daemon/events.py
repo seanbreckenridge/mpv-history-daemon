@@ -248,6 +248,12 @@ def _reconstruct_event_stream(
     pause_start_time: Optional[float] = None  # if the entry is paused, when it started
     actions: Dict[float, Tuple[str, float]] = {}
 
+    # a heuristic to determine if this is an old file, is-paused can be useful
+    # to help dedupe incorrect 'resumed' events that happen when a socket first connects
+    seen_pause_event = False
+
+    logger.debug(f"Reading events from {filename}")
+
     # sort by timestamp, incase
     for dt_s in sorted(events):
         dt_float = float(dt_s)
@@ -288,6 +294,7 @@ def _reconstruct_event_stream(
             # same across the entire run of mpv
             working_dir = event_data
         elif event_name == "is-paused":
+            seen_pause_event = True  # sets true for this entire file
             # if this was paused when we connected to the socket,
             # assume its been paused since close to it was launched
             if event_data is True:
@@ -321,6 +328,58 @@ def _reconstruct_event_stream(
             assert event_data is not None
             media_data[event_name] = float(event_data)
         elif event_name in ["seek", "paused", "resumed"]:
+            if event_data is not None and "percent-pos" in event_data:
+                assert event_name in ["seek", "resumed", "paused"]
+                if event_name in ["seek", "paused"]:
+                    actions[dt_float] = (event_name, event_data["percent-pos"])
+                else:
+                    assert event_name == "resumed"
+                    if seen_pause_event:
+                        # this is a newer file which has the is-paused event, so the only action we should ignore is
+                        # the 'resumed' event that happens when a socket first connects,
+                        # if the file was already not playing
+                        if is_playing and len(actions) == 0:
+                            # the user hasnt pasued/played since actions is 0, so this must be the resumed event that
+                            # happens when a socket first connects. And since it is not paused and we've seen a pause event,
+                            # we are sure that the media is already playing
+                            logger.debug("We've seen an is-paused event and the file is already playing, ignoring resume event")
+                        else:
+                            actions[dt_float] = (event_name, event_data["percent-pos"])
+
+                    else:
+                        # NOTE: theres a lot of logic here, but its mostly just for myself
+                        # if you started using this at any point recently, you likely have the is-paused event in your files,
+                        # which means all the heuristics here are ignored (this issue is why I added the is-paused event in the first place)
+                        #
+                        # the last data I have that actually uses this code is from 2021-03-18 16:52:45.565000
+                        # https://github.com/seanbreckenridge/mpv-history-daemon/commit/451afb4d841262cfe0aa1a6f81fd44ef110407f6
+
+
+                        # this is an old file, so we have to guess if the resume was correct by checking if it was within
+                        # the first 20 seconds (would be 10, but lets give double that for the scan time/possibly rebooting daemon)
+                        # of the file (the default for older versions of the daemon)
+                        #
+                        # if it was, then this is the 'resumed' event that happens when a socket first connects
+                        # if it wasnt, then this is a resume event that happened after the file was paused
+                        # so we should add it to the actions
+                        if start_time is not None and dt_float - start_time <= 20 and is_playing and len(actions) == 0:
+                            # this was in the first 10 seconds of the file, and its already playing, so
+                            # lets assume this is the 'resumed' event that happens when a socket first connects
+                            # and ignore it
+                            #
+                            # this should be fine anyways, as its just the action we're ignoring here, the file
+                            # is already playing and we received a resume event, so we are not changing the state
+                            logger.debug("Ignoring resume event in the first 20 seconds of the file while we are already playing, we cant know if this is a real resume event or not")
+                        else:
+                            # this might have also been a case in which mpv was already playing and you started the daemon afterwards
+                            # if playlist position is higher than 0, then this was probably already paused mpv connected (but this is an old file)
+                            # so we have no way to know if it was already paused with the is-paused event
+                            #
+                            # so, lets just yield it in this case, since it was probably real
+                            #
+                            # it could also just be an old file, and we're resuming after a pause. i.e. the normal case
+                            actions[dt_float] = (event_name, event_data["percent-pos"])
+
             if event_name == "paused":
                 # if a pause event was received while mpv was still playing,
                 # save when it was paused, we can calculate complete pause time
@@ -329,34 +388,15 @@ def _reconstruct_event_stream(
                 if is_playing:
                     is_playing = False
                     pause_start_time = dt_float
-                else:
-                    logger.debug("received pause event while paused?")
             elif event_name == "resumed":
                 # if its currently paused, and we received a resume event
                 if not is_playing:
                     is_playing = True
                     # if we know when it was paused, add how long it was paused to pause_duration
+                    # otherwise, we cant know if it had started paused before the daemon connected to the socket
                     if pause_start_time is not None:
                         pause_duration = pause_duration + (dt_float - pause_start_time)
                         pause_start_time = None
-                else:
-                    # logger.warning("received resumed event while already playing?")
-                    pass
-            if event_data is not None and "percent-pos" in event_data:
-                # if this is the 'resumed' event that happens when a socket first
-                # connects, dont add it to the actions
-                # also makes sure we already don't have any events. That way, if I was
-                # spamming pause/play for some reason, when this was first launched or paused
-                # some song immediately, those events are still used as normal
-                #
-                # its just the initial 'resumed' event that happens that is ignored
-                if not (
-                    event_name == "resumed"
-                    and start_time is not None
-                    and dt_float - start_time <= SCAN_TIME
-                    and len(actions) == 0
-                ):
-                    actions[dt_float] = (event_name, event_data["percent-pos"])
         elif event_name == "eof":
             # eof is *ALWAYS* before new data gets loaded in
             # if mpv is force quit, may not have an eof.
