@@ -275,6 +275,7 @@ class LoopHandler:
         *,
         autostart: bool = True,
         write_period: Optional[int],
+        poll_time: Optional[int] = 10,
         socket_data_cls: Type[SocketData] = SocketData,
     ):
         self.data_dir: str = data_dir
@@ -283,6 +284,7 @@ class LoopHandler:
         self._socket_dir_path: Path = Path(socket_dir).expanduser().absolute()
         self.sockets: Dict[str, MPV] = {}
         self.socket_data_cls = socket_data_cls
+        self.poll_time = poll_time
         self.socket_data: Dict[str, SocketData] = {}
         if autostart:
             self.run_loop()
@@ -442,13 +444,14 @@ class LoopHandler:
                 socket_data.write()
 
     def run_loop(self) -> None:
-        logger.debug("Starting mpv-history-daemon loop...")
-        logger.debug(f"Using socket class {self.socket_data_cls}")
-        while True:
-            self.scan_sockets()
-            self.periodic_write()
-            self.write_data()
-            sleep(SCAN_TIME)
+        if self.poll_time:
+            logger.debug("Starting mpv-history-daemon loop...")
+            logger.debug(f"Using socket class {self.socket_data_cls}")
+            while True:
+                self.scan_sockets()
+                self.periodic_write()
+                self.write_data()
+                sleep(self.poll_time)
 
 
 def run(
@@ -457,6 +460,7 @@ def run(
     log_file: str,
     write_period: Optional[int],
     socket_data_cls: Type[SocketData],
+    poll_time: Optional[int],
 ) -> None:
     # if the daemon launched before any mpv instances
     if not os.path.exists(socket_dir):
@@ -471,6 +475,7 @@ def run(
         autostart=False,
         write_period=write_period,
         socket_data_cls=socket_data_cls,
+        poll_time=poll_time,
     )
     # incase user keyboardinterrupt's or this crashes completely
     # for some reason, write data out to files in-case it hasn't

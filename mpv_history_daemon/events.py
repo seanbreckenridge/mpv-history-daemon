@@ -24,7 +24,6 @@ from typing import (
 
 from logzero import setup_logger  # type: ignore[import]
 
-from .daemon import SCAN_TIME
 from .serialize import parse_json_file
 
 # TODO: better logger setup?
@@ -46,7 +45,8 @@ class Action(NamedTuple):
     # this event happened this many seconds after this media was started
     since_started: float
     action: str
-    percentage: Optional[float]  # this can be None if its a livestream, those dont have a percent-pos
+    # this can be None if its a livestream, those dont have a percent-pos
+    percentage: Optional[float]
 
 
 class Media(NamedTuple):
@@ -342,7 +342,9 @@ def _reconstruct_event_stream(
                             # the user hasnt pasued/played since actions is 0, so this must be the resumed event that
                             # happens when a socket first connects. And since it is not paused and we've seen a pause event,
                             # we are sure that the media is already playing
-                            logger.debug("We've seen an is-paused event and the file is already playing, ignoring resume event")
+                            logger.debug(
+                                "We've seen an is-paused event and the file is already playing, ignoring resume event"
+                            )
                         else:
                             actions[dt_float] = (event_name, event_data["percent-pos"])
 
@@ -354,7 +356,6 @@ def _reconstruct_event_stream(
                         # the last data I have that actually uses this code is from 2021-03-18 16:52:45.565000
                         # https://github.com/seanbreckenridge/mpv-history-daemon/commit/451afb4d841262cfe0aa1a6f81fd44ef110407f6
 
-
                         # this is an old file, so we have to guess if the resume was correct by checking if it was within
                         # the first 20 seconds (would be 10, but lets give double that for the scan time/possibly rebooting daemon)
                         # of the file (the default for older versions of the daemon)
@@ -362,14 +363,21 @@ def _reconstruct_event_stream(
                         # if it was, then this is the 'resumed' event that happens when a socket first connects
                         # if it wasnt, then this is a resume event that happened after the file was paused
                         # so we should add it to the actions
-                        if start_time is not None and dt_float - start_time <= 20 and is_playing and len(actions) == 0:
+                        if (
+                            start_time is not None
+                            and dt_float - start_time <= 20
+                            and is_playing
+                            and len(actions) == 0
+                        ):
                             # this was in the first 10 seconds of the file, and its already playing, so
                             # lets assume this is the 'resumed' event that happens when a socket first connects
                             # and ignore it
                             #
                             # this should be fine anyways, as its just the action we're ignoring here, the file
                             # is already playing and we received a resume event, so we are not changing the state
-                            logger.debug("Ignoring resume event in the first 20 seconds of the file while we are already playing, we cant know if this is a real resume event or not")
+                            logger.debug(
+                                "Ignoring resume event in the first 20 seconds of the file while we are already playing, we cant know if this is a real resume event or not"
+                            )
                         else:
                             # this might have also been a case in which mpv was already playing and you started the daemon afterwards
                             # if playlist position is higher than 0, then this was probably already paused mpv connected (but this is an old file)
