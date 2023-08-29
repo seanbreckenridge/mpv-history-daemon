@@ -137,6 +137,9 @@ def parse(data_files: Sequence[str], all_events: bool, debug: bool) -> None:
     "--mtime-seconds",
     type=int,
     default=3600,
+    show_default=True,
+    envvar="MPV_HISTORY_MTIME_SECONDS",
+    show_envvar=True,
     help="If files have been modified in this amount of time, don't merge them",
 )
 def merge(
@@ -145,7 +148,7 @@ def merge(
     """
     merges multiple files into a single merged event file
     """
-    json_files = list(_resolve_paths(data_files))
+    json_files = list(_resolve_paths(list(data_files)))
     if move is not None:
         move.mkdir(parents=True, exist_ok=True)
     res = merge_files(json_files, mtime_seconds_since=mtime_seconds)
