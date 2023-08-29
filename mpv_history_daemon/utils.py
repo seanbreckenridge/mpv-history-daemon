@@ -7,7 +7,7 @@ As these have no dependencies, locating it here makes it easier to use in lots o
 import os
 import logging
 from urllib.parse import urlparse
-from typing import Dict, Optional, Tuple, Any, NamedTuple, List
+from typing import Dict, Optional, Any, NamedTuple, List
 
 from .events import Media
 
