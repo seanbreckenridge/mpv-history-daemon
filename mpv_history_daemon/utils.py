@@ -40,7 +40,7 @@ class MediaAllowed:
     A helper class to organize/filter media based on prefixes, extensions, and streaming etc.
 
     Typically used to filter out media streams (from your camera), livestreams (watching youtube/twitch) through mpv
-    And generally just using mpv while editing videos/viewing things in your media folder that arent Movies/TV/Music etc.
+    And generally just using mpv while editing videos/viewing things in your media folder that aren't Movies/TV/Music etc.
 
     allow_prefixes: A list of prefixes that are allowed, like ["/home/user/Music", "/home/user/Videos"]
     ignore_prefixes: A list of prefixes that are ignored, like ["/home/user/Downloads", "/home/user/.cache"]
