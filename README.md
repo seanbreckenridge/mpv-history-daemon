@@ -169,12 +169,11 @@ Options:
 Merged files look like:
 
 ```yaml
-{
-  "mapping": {
-    "1611383220380934268.json": {"1619915695.2387643":{"socket-added":1619915695.238762}},
-    # other stuff...
-  },
-}
+{ "mapping": {
+      "1611383220380934268.json":
+        { "1619915695.2387643": { "socket-added": 1619915695.238762 } },
+      # other stuff...
+    } }
 ```
 
 ... saving the filename and the corresponding data from the original files
