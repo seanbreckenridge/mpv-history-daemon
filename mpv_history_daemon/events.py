@@ -133,7 +133,7 @@ def _parse_history_file(p: Path) -> Results:
 def _read_event_stream(
     events: Any, filename: str, *, allow_if_playing_for: int = 60
 ) -> Results:
-    # if theres a conflict, keep a 'score' by adding non-null fields on an item,
+    # if there's a conflict, keep a 'score' by adding non-null fields on an item,
     # and return the one that has the most
     #
     # sometimes youtube-dl will show up twice ...?
@@ -145,7 +145,7 @@ def _read_event_stream(
     ):
         # required keys
         if not REQUIRED_KEYS.issubset(set(d)):
-            # logger.debug("Doesnt have required keys, ignoring...")
+            # logger.debug("Doesn't have required keys, ignoring...")
             continue
         if d["end_time"] < d["start_time"]:
             logger.warning(f"End time is less than start time! {d}")
@@ -217,7 +217,7 @@ def _reconstruct_event_stream(
     events: Any, filename: str, *, allow_if_playing_for: int
 ) -> Iterator[Dict[str, Any]]:
     """
-    Takes about a dozen events receieved chronologically from the MPV
+    Takes about a dozen events received chronologically from the MPV
     socket, and reconstructs what I was doing while it was playing.
     """
     # mpv socket names are created like:
@@ -254,7 +254,7 @@ def _reconstruct_event_stream(
 
     logger.debug(f"Reading events from {filename}")
 
-    # sort by timestamp, incase
+    # sort by timestamp, in case
     for dt_s in sorted(events):
         dt_float = float(dt_s)
         most_recent_time = dt_float
@@ -265,7 +265,7 @@ def _reconstruct_event_stream(
         elif event_name == "playlist-pos":
             # reliable event to use to set start time of an item
             # the first item might have been off for 5 or so seconds
-            # because of the socket_scan, so we cant use playlist-pos's
+            # because of the socket_scan, so we can't use playlist-pos's
             # timestamp as the start of the mpv instance.
             # instead, we use the timestamp from the /tmp/mpvsocket/ filename
             #
@@ -290,7 +290,7 @@ def _reconstruct_event_stream(
             if start_time is None:
                 start_time = int(float(event_data))
         elif event_name == "working-directory":
-            # shouldnt be added to media_data, affects path, but is the
+            # shouldn't be added to media_data, affects path, but is the
             # same across the entire run of mpv
             working_dir = event_data
         elif event_name == "is-paused":
@@ -339,7 +339,7 @@ def _reconstruct_event_stream(
                         # the 'resumed' event that happens when a socket first connects,
                         # if the file was already not playing
                         if is_playing and len(actions) == 0:
-                            # the user hasnt pasued/played since actions is 0, so this must be the resumed event that
+                            # the user hasn't pasued/played since actions is 0, so this must be the resumed event that
                             # happens when a socket first connects. And since it is not paused and we've seen a pause event,
                             # we are sure that the media is already playing
                             logger.debug(
@@ -349,7 +349,7 @@ def _reconstruct_event_stream(
                             actions[dt_float] = (event_name, event_data["percent-pos"])
 
                     else:
-                        # NOTE: theres a lot of logic here, but its mostly just for myself
+                        # NOTE: there's a lot of logic here, but its mostly just for myself
                         # if you started using this at any point recently, you likely have the is-paused event in your files,
                         # which means all the heuristics here are ignored (this issue is why I added the is-paused event in the first place)
                         #
@@ -361,7 +361,7 @@ def _reconstruct_event_stream(
                         # of the file (the default for older versions of the daemon)
                         #
                         # if it was, then this is the 'resumed' event that happens when a socket first connects
-                        # if it wasnt, then this is a resume event that happened after the file was paused
+                        # if it wasn't, then this is a resume event that happened after the file was paused
                         # so we should add it to the actions
                         if (
                             start_time is not None
@@ -376,7 +376,7 @@ def _reconstruct_event_stream(
                             # this should be fine anyways, as its just the action we're ignoring here, the file
                             # is already playing and we received a resume event, so we are not changing the state
                             logger.debug(
-                                "Ignoring resume event in the first 20 seconds of the file while we are already playing, we cant know if this is a real resume event or not"
+                                "Ignoring resume event in the first 20 seconds of the file while we are already playing, we can't know if this is a real resume event or not"
                             )
                         else:
                             # this might have also been a case in which mpv was already playing and you started the daemon afterwards
@@ -401,7 +401,7 @@ def _reconstruct_event_stream(
                 if not is_playing:
                     is_playing = True
                     # if we know when it was paused, add how long it was paused to pause_duration
-                    # otherwise, we cant know if it had started paused before the daemon connected to the socket
+                    # otherwise, we can't know if it had started paused before the daemon connected to the socket
                     if pause_start_time is not None:
                         pause_duration = pause_duration + (dt_float - pause_start_time)
                         pause_start_time = None
@@ -423,7 +423,7 @@ def _reconstruct_event_stream(
         elif event_name in ["mpv-quit", "final-write"]:
             # if this happened right after an eof, it can be ignored
 
-            # if the eof didnt happen and mpv was quit manually, save
+            # if the eof didn't happen and mpv was quit manually, save
             # quit time as end_time
             if REQUIRED_KEYS.issubset(set(media_data)):
                 # if I quit while it was paused
@@ -438,8 +438,8 @@ def _reconstruct_event_stream(
             logger.warning(f"Unexpected event name {event_name}")
 
     if len(media_data) != 0:
-        # if we have enough of the fields in the namedtuple, then this isnt
-        # a corrupted file, its one that didnt have an eof/had events
+        # if we have enough of the fields in the namedtuple, then this isn't
+        # a corrupted file, its one that didn't have an eof/had events
         # after an eof for some reason
         if not REQUIRED_KEYS.issubset(set(media_data)):
             logger.debug("Ignoring leftover data... {}".format(media_data))

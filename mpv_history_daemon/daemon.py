@@ -1,10 +1,10 @@
 """
-This probably isn't optmized/the minimum amount of code to do this
+This probably isn't optimized/the minimum amount of code to do this
 Dealing with sockets/EOFs/random drops is a pain, so this stays on the safe side
-of validating to make sure sockets arent left dangling or data isn't
+of validating to make sure sockets aren't left dangling or data isn't
 saved, because of a ConnectionRefusedError/BrokenPipe/general OSErrors
 
-logzero logs all the exceptions, incase theyre not what I expect
+logzero logs all the exceptions, in case they're not what I expect
 most of the times, mpv will be open for more than 10 minutes, so
 the write period periodically writes will at least capture what was
 being listened to, even if *somehow* (has only happened
@@ -91,7 +91,7 @@ class SocketData:
             # is-paused
         # event-based
             # whenever a socket is played/paused
-            # whenever a file changes (eof-reached) save metadata about whats being played
+            # whenever a file changes (eof-reached) save metadata about what's being played
                 # metadata
                 # media-title
                 # path
@@ -112,7 +112,7 @@ class SocketData:
         self.socket_time = socket_loc.split("/")[-1]
         self.events: Dict[float, Dict] = {}
         self.write_period = write_period if write_period is not None else 600
-        # write every 10 minutes, even if mpv doesnt exit
+        # write every 10 minutes, even if mpv doesn't exit
         self.write_at = time() + self.write_period
         # keep track of playlist/playlist-count, so we can use eof to determine
         # whether we should read next metadata
@@ -124,7 +124,7 @@ class SocketData:
         playlist_pos = self.socket.playlist_pos
         # incremented at the top of in store_file_metadata
         # technically this is zero-indexed, but have to deal with off-by-one errors
-        # because I cant read the playlist position of a dead socket, counting manually
+        # because I can't read the playlist position of a dead socket, counting manually
         if playlist_pos is None:
             logger.warning(
                 "Couldn't get playlist position in SocketData initialization, defaulting to 0"
@@ -178,7 +178,7 @@ class SocketData:
         self, attr: str, event_name: str, tries: int = 20, create_event: bool = True
     ) -> Any:
         """
-        Some properties arent set when the file starts?
+        Some properties aren't set when the file starts?
         sleeps for 0.1 of a second between tries (20 * 0.1 = 2 seconds)
 
         if create_event, once it has a non-None value, it sets the value
@@ -205,7 +205,7 @@ class SocketData:
             logger.debug("Reached end of playlist, not reading in next file info...")
             return
 
-        # poll for these incase theyre not set for some reason, because
+        # poll for these in case they're not set for some reason, because
         # the file was just loaded by mpv
         actual_playlist_pos = self.poll_for_property("playlist_pos", "playlist-pos")
         # make sure internal, manually counted playlist index is accurate
@@ -215,7 +215,7 @@ class SocketData:
         self.poll_for_property("path", "path")
         self.poll_for_property("media_title", "media-title")
 
-        # weird, metadata and duration arent received at the beginning of the file?
+        # weird, metadata and duration aren't received at the beginning of the file?
         # poll for duration and metadata
         # maybe these have to be parsed and there done a bit after the file is read
         self.poll_for_property("metadata", "metadata")
@@ -237,14 +237,14 @@ class SocketData:
         """
         Called when the 'eof' event happens. Doesn't necessarily mean mpv exits
         Could be going to the next song in the current playlist
-        (This doesnt happen the first time a song is loaded)
+        (This doesn't happen the first time a song is loaded)
 
         Though, this is also called when mpv exits, so we should wrap the
         possible socket errors
         """
         self.nevent("eof")
         try:
-            self.store_file_metadata()  # store info about new file thats playing
+            self.store_file_metadata()  # store info about new file that's playing
         # possible errors thrown: BrokenPipeError, OSError
         except Exception as e:
             logger.warning(f"Ignoring error: {e}")
@@ -304,7 +304,7 @@ class LoopHandler:
                 socket_loc: str = os.path.join(self.socket_dir, socket_name)
                 socket_loc_scoped = socket_loc
                 if socket_loc not in self.sockets:
-                    # each of these runs in a separate thread, so the while loop below doesnt block event data
+                    # each of these runs in a separate thread, so the while loop below doesn't block event data
                     # ConnectionRefusedError thrown here
                     new_sock = MPV(
                         start_mpv=False,
@@ -321,11 +321,11 @@ class LoopHandler:
                         )
                     self.attach_observers(socket_loc, new_sock)
                     self.debug_internals()
-                else:  # if this socket is already connected, just try to get the path from the scoket
+                else:  # if this socket is already connected, just try to get the path from the socket
                     # may have been a TimeoutError: No response from MPV.
-                    # which resulted in the socket remaning in self.sockets, even if its eof'd and exited
+                    # which resulted in the socket remaining in self.sockets, even if its eof'd and exited
                     self.sockets[socket_loc].path
-            # iterate through sockets, if file doesnt exist for some reason
+            # iterate through sockets, if file doesn't exist for some reason
             # this is probably unnecessary
             for s_loc, sock_obj in self.sockets.items():
                 # update higher scope to allow usage in except block
@@ -363,7 +363,7 @@ class LoopHandler:
         # keep track of when last EOF was. EOF also happens when
         # a file is loaded, and seeking happens when you load a file,
         # (since its sort of seeking to the beginning)
-        # doesnt seem to be deterministic/easy to filter seeks out
+        # doesn't seem to be deterministic/easy to filter seeks out
         # by EOFs, and might match actual seeking. so, will have
         # to do larger analysis on the dumped data to figure out
         # if EOF next to seek, remove the seek
@@ -382,7 +382,7 @@ class LoopHandler:
                 return
             if value is not None:
                 logger.warning(
-                    "Seems that this is supposed to be None; just to signify event? not sure why it isnt"
+                    "Seems that this is supposed to be None; just to signify event? not sure why it isn't"
                 )
             socket_data.event_eof()
 
@@ -405,9 +405,9 @@ class LoopHandler:
                 pass
         else:
             logger.warning(
-                "called remove socket, but socket_loc doesnt exist in self.sockets"
+                "called remove socket, but socket_loc doesn't exist in self.sockets"
             )
-        # (doesnt remove the file here, but should find it on the next scan_sockets call and remove it then)
+        # (doesn't remove the file here, but should find it on the next scan_sockets call and remove it then)
 
     def debug_internals(self) -> None:
         logger.debug(f"sockets {self.sockets}")
@@ -511,7 +511,7 @@ def run(
         socket_data_cls=socket_data_cls,
         poll_time=poll_time,
     )
-    # incase user keyboardinterrupt's or this crashes completely
+    # in case user keyboardinterrupt's or this crashes completely
     # for some reason, write data out to files in-case it hasn't
     # been done recently
     atexit.register(lambda: lh.write_data(force=True))

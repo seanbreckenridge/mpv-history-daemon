@@ -14,7 +14,7 @@ Requires `python3.8+`
 
 ### Known Issues
 
-For whatever reason, this stops working after a few days of continuous use (perhaps because of my laptop suspending?), so I wrap this with another script which restarts this every so often if there are no open `mpv` instances. I would recommend starting this by running:
+For some reason I can never pinpoint, this stops working after a few days of continuous use (perhaps because of my laptop suspending?), so I wrap this with another script which restarts this every so often if there are no open `mpv` instances. I would recommend starting this by running:
 
 ```
 mpv_history_daemon_restart /your/data/dir
