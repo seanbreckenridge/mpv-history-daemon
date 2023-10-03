@@ -63,7 +63,7 @@ Connected refused for socket at /tmp/mpvsockets/1598956534118491075, removing de
 
 More events would keep getting logged, as I pause/play, or the file ends and a new file starts. The key for each JSON value is the epoch time, so everything is timestamped.
 
-By default, this scans the socket directory every 10 seconds. If you'd instead like to use a filewatcher so this picks up files immediately, you can install `python3 -m pip install watchfiles` and use `--watch`
+By default, this scans the socket directory every 10 seconds.
 
 #### custom SocketData class
 

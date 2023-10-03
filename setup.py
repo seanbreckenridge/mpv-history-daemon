@@ -23,7 +23,7 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=requirements,
     python_requires=">=3.8",
-    extras_require={"optional": ["orjson", "watchfiles"]},
+    extras_require={"optional": ["orjson"]},
     name=pkg,
     packages=find_packages(include=[pkg]),
     package_data={pkg: ["py.typed"]},

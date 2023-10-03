@@ -65,7 +65,7 @@ def _parse_polling(
     default=10,
     type=click.UNPROCESSED,
     callback=_parse_polling,
-    help="How often to scan for new mpv sockets files in the SOCKET_DIR - this is a manual scan of the directory every <n> seconds (default: 10). Set to 'disabled' to disable polling (if you're using --watch).",
+    help="How often to scan for new mpv sockets files in the SOCKET_DIR - this is a manual scan of the directory every <n> seconds (default: 10). Set to 'disabled' to disable polling altogether",
 )
 @click.option(
     "--socket-class-qualname",
