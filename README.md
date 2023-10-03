@@ -65,6 +65,26 @@ More events would keep getting logged, as I pause/play, or the file ends and a n
 
 By default, this scans the socket directory every 10 seconds.
 
+#### Watching the /tmp/mpvsockets/ directory
+
+This does not come with a built-in inotify/directory watcher, but it does allow you to send a signal (in particular, `RTMIN`) to the daemon process to check if new files have been added.
+
+So, I have a script like this (say, `mpv_signal_daemon`) which sends the signal:
+
+```bash
+pkill -f 'python3 -m mpv_history_daemon daemon' -RTMIN || true
+```
+
+And then I run [`watchfiles`](https://github.com/samuelcolvin/watchfiles) in the background like:
+
+```
+watchfiles mpv_signal_daemon /tmp/mpvsockets/
+```
+
+Whenever watchfiles sees a file added/modified/deleted, it sends a signal to the daemon, to recheck if there are new sockets to process.
+
+I personally run this with `--scan-time 30` and `watchfiles`. `watchfiles` will typically pick up all changes, but the poll is there just in case it fails or misses something
+
 #### custom SocketData class
 
 You can pass a custom socket data class with to `daemon` with `--socket-class-qualname`, which lets you customize the behaviour of the `SocketData` class. For example, I override particular events (see [`SocketDataServer`](https://github.com/seanbreckenridge/currently_listening/blob/main/currently_listening_py/currently_listening_py/socket_data.py)) to intercept data and send it to my [`currently_listening`](https://github.com/seanbreckenridge/currently_listening) server, which among other things displays my currently playing mpv song in discord:

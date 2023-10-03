@@ -185,6 +185,7 @@ class SocketData:
         with self.nevent
         """
         for _ in range(tries):
+            logger.debug(f"polling for {attr} {event_name}")
             value = getattr(self.socket, attr)
             if value is not None:
                 if create_event:
