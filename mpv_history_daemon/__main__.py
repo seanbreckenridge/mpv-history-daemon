@@ -4,7 +4,7 @@ import shutil
 import logging
 import importlib
 from pathlib import Path
-from typing import Any, Sequence, Iterator, Optional
+from typing import Any, Sequence, Iterator, Optional, Union, Literal
 from tempfile import gettempdir
 
 import click
@@ -18,12 +18,28 @@ from .serialize import dump_json
 from . import events as events_module
 
 
-@click.group()
+@click.group(context_settings={"max_content_width": 100})
 def cli():
     """
     Connects to mpv socket files and saves a history of events
     """
     pass
+
+
+def _parse_polling(
+    ctx: click.Context,
+    param: click.Parameter,
+    value: Union[str, int],
+) -> Union[Literal["disabled"], int]:
+    if value == "disabled":
+        return "disabled"
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value)
+    raise click.BadParameter(
+        f"must be an integer or 'disabled', got {value!r}", ctx=ctx, param=param
+    )
 
 
 @cli.command()
@@ -39,7 +55,17 @@ def cli():
     "--write-period",
     type=int,
     default=None,
-    help="How often to write to files while mpv is open",
+    help="How often to write JSON data files while mpv is open",
+)
+@click.option(
+    "-s",
+    "--scan-time",
+    envvar="MPV_HISTORY_DAEMON_SCAN_TIME",
+    show_envvar=True,
+    default=10,
+    type=click.UNPROCESSED,
+    callback=_parse_polling,
+    help="How often to scan for new mpv sockets files in the SOCKET_DIR - this is a manual scan of the directory every <n> seconds (default: 10). Set to 'disabled' to disable polling altogether",
 )
 @click.option(
     "--socket-class-qualname",
@@ -51,6 +77,7 @@ def daemon(
     socket_dir: str,
     data_dir: str,
     log_file: str,
+    scan_time: Union[Literal["disabled"], int],
     write_period: Optional[int],
     socket_class_qualname: Optional[str],
 ) -> None:
@@ -64,12 +91,14 @@ def daemon(
         module = importlib.import_module(module_name)
         socketclass = getattr(module, class_name)
         assert issubclass(socketclass, SocketData)
+    poll_time = scan_time if isinstance(scan_time, int) else None
     run(
         socket_dir=socket_dir,
         data_dir=data_dir,
         log_file=log_file,
         write_period=write_period,
         socket_data_cls=socketclass,
+        poll_time=poll_time,
     )
 
 

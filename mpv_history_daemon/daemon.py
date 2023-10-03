@@ -16,6 +16,8 @@ BrokenPipes are captured in the event_eof function
 
 import os
 import atexit
+import threading
+import signal
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Type
 from time import sleep, time
@@ -167,9 +169,9 @@ class SocketData:
 
     def store_initial_metadata(self) -> None:
         self.nevent("socket-added", time())
-        self.nevent("working-directory", self.socket.working_directory)
-        self.nevent("playlist-count", self.socket.playlist_count)
-        self.nevent("is-paused", self.socket.pause)
+        self.poll_for_property("working_directory", "working-directory")
+        self.poll_for_property("playlist_count", "playlist-count")
+        self.poll_for_property("pause", "is-paused")
         # self.nevent("playlist", clean_playlist(self.socket.playlist))
 
     def poll_for_property(
@@ -183,6 +185,7 @@ class SocketData:
         with self.nevent
         """
         for _ in range(tries):
+            logger.debug(f"polling for {attr} {event_name}")
             value = getattr(self.socket, attr)
             if value is not None:
                 if create_event:
@@ -275,6 +278,7 @@ class LoopHandler:
         *,
         autostart: bool = True,
         write_period: Optional[int],
+        poll_time: Optional[int] = 10,
         socket_data_cls: Type[SocketData] = SocketData,
     ):
         self.data_dir: str = data_dir
@@ -283,7 +287,10 @@ class LoopHandler:
         self._socket_dir_path: Path = Path(socket_dir).expanduser().absolute()
         self.sockets: Dict[str, MPV] = {}
         self.socket_data_cls = socket_data_cls
+        self.poll_time = poll_time
         self.socket_data: Dict[str, SocketData] = {}
+        self.waiting = threading.Event()
+        self.setup_signal_handler()
         if autostart:
             self.run_loop()
 
@@ -424,7 +431,7 @@ class LoopHandler:
         # but we have socketdata for it from when it was alive, in
         # self.socket_data, write that out to data_dir
         #
-        # runs in the main thread, errors crash main thread
+        # this runs in the main thread... so errors crash main thread
         for socket_loc in list(self.socket_data):
             if socket_loc not in self.sockets:
                 logger.info(f"{socket_loc}: writing to file...")
@@ -433,22 +440,56 @@ class LoopHandler:
                 del self.socket_data[socket_loc]
                 self.debug_internals()
         if force:
-            # don't write additional devents to the file, just write data
-            # for every socket regardless of state. this is used if the program
+            # don't write additional events to the file, just write data
+            # for every socket regardless of state. This is used if the program
             # is crashing/etc.
             logger.warning("forcing write to files...")
             self.debug_internals()
             for socket_data in self.socket_data.values():
                 socket_data.write()
 
+    def setup_signal_handler(self) -> None:
+        # catch the RTMIN signal, which some user defined code might send to this process
+        # to tell the daemon that a new socket was added/removed
+        # this is never *required*, but its nice as it means we pick up data ASAP
+        # instead of waiting for the next scan_sockets call
+
+        signal.signal(signal.SIGRTMIN, self.signal_handler)
+
+    def signal_handler(self, signum: int, frame: Any) -> None:
+        signal_name = signal.Signals(signum).name
+        logger.debug(f"Caught signal {signum} {signal_name}, interrupting main loop")
+        self.waiting.set()
+
     def run_loop(self) -> None:
-        logger.debug("Starting mpv-history-daemon loop...")
-        logger.debug(f"Using socket class {self.socket_data_cls}")
-        while True:
-            self.scan_sockets()
-            self.periodic_write()
-            self.write_data()
-            sleep(SCAN_TIME)
+        if self.poll_time:
+            logger.debug("Starting mpv-history-daemon loop...")
+            logger.debug(f"Using socket class {self.socket_data_cls}")
+            while True:
+                self.scan_sockets()
+                self.periodic_write()
+                self.write_data()
+                was_interrupted = self.waiting.wait(self.poll_time)
+                self.waiting.clear()
+                if was_interrupted is True:
+                    logger.debug(
+                        "mpv-history-daemon got interrupt, checking sockets..."
+                    )
+        else:
+            logger.warning(
+                "poll time is None, skipping periodic check. You have to manually signal mpv whenever sockets are added or removed or this won't work"
+            )
+            while True:
+                # no timeout, just wait forever till the event is set
+                was_interrupted = self.waiting.wait()
+                self.waiting.clear()
+                if was_interrupted is True:
+                    logger.debug(
+                        "mpv-history-daemon got interrupt, checking sockets..."
+                    )
+                    self.scan_sockets()
+                    self.periodic_write()
+                    self.write_data()
 
 
 def run(
@@ -457,6 +498,7 @@ def run(
     log_file: str,
     write_period: Optional[int],
     socket_data_cls: Type[SocketData],
+    poll_time: Optional[int],
 ) -> None:
     # if the daemon launched before any mpv instances
     if not os.path.exists(socket_dir):
@@ -471,6 +513,7 @@ def run(
         autostart=False,
         write_period=write_period,
         socket_data_cls=socket_data_cls,
+        poll_time=poll_time,
     )
     # in case user keyboardinterrupt's or this crashes completely
     # for some reason, write data out to files in-case it hasn't

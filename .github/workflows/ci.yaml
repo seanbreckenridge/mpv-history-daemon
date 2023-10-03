@@ -2,9 +2,9 @@ name: Run Tests
 
 on:
   push:
-    branches: ['*']
+    branches: ["*"]
   pull_request:
-    branches: ['*']
+    branches: ["*"]
 
 jobs:
   build:
@@ -22,8 +22,10 @@ jobs:
       - name: Install packages
         run: |
           python -m pip install --upgrade pip
-          pip install '.[optional]'
-          pip install mypy
+          pip install '.[optional,testing]'
       - name: Run mypy
         run: |
           mypy --install-types --non-interactive ./mpv_history_daemon
+      - name: Run flake8
+        run: |
+          flake8 ./mpv_history_daemon

@@ -27,13 +27,19 @@ mpv_history_daemon_restart /your/data/dir
 ```
 Usage: mpv-history-daemon daemon [OPTIONS] SOCKET_DIR DATA_DIR
 
-  Socket dir is the directory with mpv sockets (/tmp/mpvsockets, probably)
-  Data dir is the directory to store the history JSON files
+  Socket dir is the directory with mpv sockets (/tmp/mpvsockets, probably) Data dir is the
+  directory to store the history JSON files
 
 Options:
-  --log-file PATH         location of logfile
-  --write-period INTEGER  How often to write to files while mpv is open
-  --help                  Show this message and exit.
+  --log-file PATH               location of logfile
+  --write-period INTEGER        How often to write JSON data files while mpv is open
+  -s, --scan-time INTEGER       How often to scan for new mpv sockets files in the SOCKET_DIR -
+                                this is a manual scan of the directory every <n> seconds  [env
+                                var: MPV_HISTORY_DAEMON_SCAN_TIME; default: 10]
+  --socket-class-qualname TEXT  Fully qualified name of the class to use for socket data, e.g.,
+                                'mpv_history_daemon.daemon.SocketData'. This imports the class and
+                                uses it for socket data.
+  --help                        Show this message and exit.
 ```
 
 Some logs, to get an idea of what this captures:
@@ -57,7 +63,27 @@ Connected refused for socket at /tmp/mpvsockets/1598956534118491075, removing de
 
 More events would keep getting logged, as I pause/play, or the file ends and a new file starts. The key for each JSON value is the epoch time, so everything is timestamped.
 
-By default, this scans the socket directory every 10 seconds -- to increase that you can set the `MPV_HISTORY_DAEMON_SCAN_TIME` environment variable, e.g. `MPV_HISTORY_DAEMON_SCAN_TIME=5`
+By default, this scans the socket directory every 10 seconds.
+
+#### Watching the /tmp/mpvsockets/ directory
+
+This does not come with a built-in inotify/directory watcher, but it does allow you to send a signal (in particular, `RTMIN`) to the daemon process to check if new files have been added.
+
+So, I have a script like this (say, `mpv_signal_daemon`) which sends the signal:
+
+```bash
+pkill -f 'python3 -m mpv_history_daemon daemon' -RTMIN || true
+```
+
+And then I run [`watchfiles`](https://github.com/samuelcolvin/watchfiles) in the background like:
+
+```
+watchfiles mpv_signal_daemon /tmp/mpvsockets/
+```
+
+Whenever watchfiles sees a file added/modified/deleted, it sends a signal to the daemon, to recheck if there are new sockets to process.
+
+I personally run this with `--scan-time 30` and `watchfiles`. `watchfiles` will typically pick up all changes, but the poll is there just in case it fails or misses something
 
 #### custom SocketData class
 
@@ -70,15 +96,13 @@ You can pass a custom socket data class with to `daemon` with `--socket-class-qu
 The daemon saves the raw event data above in JSON files, which can then be parsed into individual instances of media:
 
 ```
-$ mpv-history-daemon parse --help
-Usage: mpv-history-daemon parse [OPTIONS] DATA_DIR
+Usage: mpv-history-daemon parse [OPTIONS] DATA_FILES...
 
   Takes the data directory and parses events into Media
 
 Options:
   --all-events  return all events, even ones which by context you probably
                 didn't listen to
-
   --debug       Increase log verbosity/print warnings while parsing JSON files
   --help        Show this message and exit.
 ```
