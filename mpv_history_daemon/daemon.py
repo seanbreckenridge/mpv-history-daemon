@@ -474,7 +474,7 @@ class LoopHandler:
                     )
         else:
             logger.warning(
-                "poll time is None, skipping periodic check. You have to manually signal mpv whenever sockets are added or removed or this wont work"
+                "poll time is None, skipping periodic check. You have to manually signal mpv whenever sockets are added or removed or this won't work"
             )
             while True:
                 # no timeout, just wait forever till the event is set
