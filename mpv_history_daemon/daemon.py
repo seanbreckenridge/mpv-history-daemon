@@ -169,9 +169,9 @@ class SocketData:
 
     def store_initial_metadata(self) -> None:
         self.nevent("socket-added", time())
-        self.nevent("working-directory", self.socket.working_directory)
-        self.nevent("playlist-count", self.socket.playlist_count)
-        self.nevent("is-paused", self.socket.pause)
+        self.poll_for_property("working_directory", "working-directory")
+        self.poll_for_property("playlist_count", "playlist-count")
+        self.poll_for_property("pause", "is-paused")
         # self.nevent("playlist", clean_playlist(self.socket.playlist))
 
     def poll_for_property(
@@ -456,7 +456,8 @@ class LoopHandler:
         signal.signal(signal.SIGRTMIN, self.signal_handler)
 
     def signal_handler(self, signum: int, frame: Any) -> None:
-        logger.debug(f"Caught signal {signum}, interrupting main loop")
+        signal_name = signal.Signals(signum).name
+        logger.debug(f"Caught signal {signum} {signal_name}, interrupting main loop")
         self.waiting.set()
 
     def run_loop(self) -> None:
@@ -468,6 +469,7 @@ class LoopHandler:
                 self.periodic_write()
                 self.write_data()
                 was_interrupted = self.waiting.wait(self.poll_time)
+                self.waiting.clear()
                 if was_interrupted is True:
                     logger.debug(
                         "mpv-history-daemon got interrupt, checking sockets..."
@@ -479,6 +481,7 @@ class LoopHandler:
             while True:
                 # no timeout, just wait forever till the event is set
                 was_interrupted = self.waiting.wait()
+                self.waiting.clear()
                 if was_interrupted is True:
                     logger.debug(
                         "mpv-history-daemon got interrupt, checking sockets..."
