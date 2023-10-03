@@ -168,12 +168,12 @@ Options:
 
 Merged files look like:
 
-```json
+```yaml
 {
   "mapping": {
     "1611383220380934268.json": {"1619915695.2387643":{"socket-added":1619915695.238762}},
-    ...
-  }
+    # other stuff...
+  },
 }
 ```
 
