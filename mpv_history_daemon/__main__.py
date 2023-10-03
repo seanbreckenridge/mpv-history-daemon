@@ -4,7 +4,7 @@ import shutil
 import logging
 import importlib
 from pathlib import Path
-from typing import Any, Optional, Sequence, Iterator, Optional, Union, Literal
+from typing import Any, Sequence, Iterator, Optional, Union, Literal
 from tempfile import gettempdir
 
 import click
