@@ -16,8 +16,8 @@ Requires `python3.8+`
 
 For some reason I can never pinpoint, this stops working after a few days of continuous use (perhaps because of my laptop suspending?), so I wrap this with another script which restarts this every so often if there are no open `mpv` instances. I would recommend starting this by running:
 
-```
-mpv_history_daemon_restart /your/data/dir
+```bash
+mpv_history_daemon_restart "/your/data/dir"
 ```
 
 ## Usage
@@ -77,8 +77,8 @@ pkill -f 'python3 -m mpv_history_daemon daemon' -RTMIN || true
 
 And then I run [`watchfiles`](https://github.com/samuelcolvin/watchfiles) in the background like:
 
-```
-watchfiles mpv_signal_daemon /tmp/mpvsockets/
+```bash
+watchfiles mpv_signal_daemon '/tmp/mpvsockets/'
 ```
 
 Whenever watchfiles sees a file added/modified/deleted, it sends a signal to the daemon, to recheck if there are new sockets to process.
@@ -183,7 +183,9 @@ It doesn't merge any event files who've recently (within an hour) been written t
 
 If you want to automatically remove files which get merged into the one file, you can use the `--move` flag, like:
 
-`mpv-history-daemon merge ~/data/mpv --move ~/.cache/mpv_removed --write-to ~/data/mpv/"merged-$(date +%s).json"`
+```bash
+mpv-history-daemon merge ~/data/mpv --move ~/.cache/mpv_removed --write-to ~/data/mpv/"merged-$(date +%s).json"
+```
 
 That takes any eligible files in `~/data/mpv` (merged or new event files), merges them all into `~/data/mpv/merged-...json` (unique filename using the date), and then moves all the files that were merged to `~/.cache/mpv_removed` (moving them to some temporary directory so you can review the merged file, instead of deleting)
 
