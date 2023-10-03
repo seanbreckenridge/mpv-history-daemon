@@ -1,4 +1,0 @@
-click
-python-mpv-jsonipc
-logzero
-simplejson
