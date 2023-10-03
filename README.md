@@ -83,6 +83,8 @@ watchfiles mpv_signal_daemon '/tmp/mpvsockets/'
 
 Whenever watchfiles sees a file added/modified/deleted, it sends a signal to the daemon, to recheck if there are new sockets to process.
 
+Note: you don't have to use watchfiles, you're free to send the signal the daemon in whatever way works for you.
+
 I personally run this with `--scan-time 30` and `watchfiles`. `watchfiles` will typically pick up all changes, but the poll is there just in case it fails or misses something
 
 #### custom SocketData class
