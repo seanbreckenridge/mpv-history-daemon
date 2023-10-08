@@ -2,6 +2,7 @@ import time
 from pathlib import Path
 from typing import List, Any, Dict, NamedTuple
 
+from .events import logger
 from .serialize import parse_json_file
 
 
@@ -32,6 +33,9 @@ def merge_files(files: List[Path], mtime_seconds_since: int = 3600) -> MergeResu
         else:
             since_write = time.time() - f.stat().st_mtime
             if since_write < mtime_seconds_since:
+                logger.info(
+                    f"Skipping {f} because it was modified {since_write} (< {mtime_seconds_since}) seconds ago"
+                )
                 continue
             event_files.append(f)
 
