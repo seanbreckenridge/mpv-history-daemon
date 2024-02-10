@@ -6,6 +6,7 @@ import importlib
 from pathlib import Path
 from typing import Any, Sequence, Iterator, Optional, Union, Literal
 from tempfile import gettempdir
+from kompress import CPath
 
 import click
 import simplejson
@@ -108,12 +109,16 @@ def default_encoder(o: Any) -> Any:
     raise TypeError(f"{o} of type {type(o)} is not serializable")
 
 
+def _parse_compressed(path: Path) -> Path:
+    return CPath(path)  # type: ignore
+
+
 def _resolve_paths(paths: Sequence[str]) -> Iterator[Path]:
     for p in map(Path, paths):
         if p.is_dir():
-            yield from p.iterdir()
+            yield from map(_parse_compressed, (p.iterdir()))
         else:
-            yield p
+            yield _parse_compressed(p)
 
 
 @cli.command()
