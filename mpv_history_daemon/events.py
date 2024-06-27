@@ -120,7 +120,10 @@ def history(
 
 
 def _parse_history_file(p: Path) -> Results:
-    event_data = parse_json_file(p)
+    try:
+        event_data = parse_json_file(p)
+    except Exception as e:
+        raise Exception(f"Error parsing JSON file {p}") from e
     # mapping signifies this is a merged file, whose key is the old filename
     # and value is the JSON data
     if "mapping" in event_data:
