@@ -235,6 +235,7 @@ def _reconstruct_event_stream(
         start_time = float(int(PurePath(filename).stem) / 1e9)
     except ValueError as ve:
         logger.warning(str(ve))
+        logger.warning("Using 'socket-added' event time instead of filename")
 
     # dictionary for storing data while we parse though events
     media_data: Dict[str, Any] = {}
