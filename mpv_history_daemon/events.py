@@ -358,7 +358,7 @@ def _reconstruct_event_stream(
                         # which means all the heuristics here are ignored (this issue is why I added the is-paused event in the first place)
                         #
                         # the last data I have that actually uses this code is from 2021-03-18 16:52:45.565000
-                        # https://github.com/seanbreckenridge/mpv-history-daemon/commit/451afb4d841262cfe0aa1a6f81fd44ef110407f6
+                        # https://github.com/purarue/mpv-history-daemon/commit/451afb4d841262cfe0aa1a6f81fd44ef110407f6
 
                         # this is an old file, so we have to guess if the resume was correct by checking if it was within
                         # the first 20 seconds (would be 10, but lets give double that for the scan time/possibly rebooting daemon)

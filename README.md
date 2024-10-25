@@ -1,6 +1,6 @@
 # mpv-history-daemon
 
-This functions by connecting to socket files created by [`mpv-sockets`](https://github.com/seanbreckenridge/mpv-sockets). The `mpv` script there launches mpv with unique mpv sockets at `/tmp/mpvsockets/`.
+This functions by connecting to socket files created by [`mpv-sockets`](https://github.com/purarue/mpv-sockets). The `mpv` script there launches mpv with unique mpv sockets at `/tmp/mpvsockets/`.
 
 For each `mpv` socket, this attaches event handlers which tell me whenever a file in a playlist ends, whenever I seek (skip), what the current working directory/path is, and whenever I play/pause an item. Once the `mpv` instance quits, it saves all the events to a JSON file.
 
@@ -46,7 +46,7 @@ Some logs, to get an idea of what this captures:
 
 ```
 1598956534118491075|1598957274.3349547|mpv-launched|1598957274.334953
-1598956534118491075|1598957274.335344|working-directory|/home/sean/Music
+1598956534118491075|1598957274.335344|working-directory|/home/username/Music
 1598956534118491075|1598957274.3356173|playlist-count|12
 1598956534118491075|1598957274.3421223|playlist-pos|2
 1598956534118491075|1598957274.342346|path|Masayoshi Takanaka/Masayoshi Takanaka - Alone (1988)/02 - Feedback's Feel.mp3
@@ -89,9 +89,9 @@ I personally run this with `--scan-time 30` and `watchfiles`. `watchfiles` will 
 
 #### custom SocketData class
 
-You can pass a custom socket data class with to `daemon` with `--socket-class-qualname`, which lets you customize the behaviour of the `SocketData` class. For example, I override particular events (see [`SocketDataServer`](https://github.com/seanbreckenridge/currently_listening/blob/main/currently_listening_py/currently_listening_py/socket_data.py)) to intercept data and send it to my [`currently_listening`](https://github.com/seanbreckenridge/currently_listening) server, which among other things displays my currently playing mpv song in discord:
+You can pass a custom socket data class with to `daemon` with `--socket-class-qualname`, which lets you customize the behaviour of the `SocketData` class. For example, I override particular events (see [`SocketDataServer`](https://github.com/purarue/currently_listening/blob/main/currently_listening_py/currently_listening_py/socket_data.py)) to intercept data and send it to my [`currently_listening`](https://github.com/purarue/currently_listening) server, which among other things displays my currently playing mpv song in discord:
 
-![demo discord image](https://github.com/seanbreckenridge/currently_listening/blob/main/.github/discord.png?raw=true)
+![demo discord image](https://github.com/purarue/currently_listening/blob/main/.github/discord.png?raw=true)
 
 ### parse
 
@@ -190,4 +190,4 @@ mpv-history-daemon merge ~/data/mpv --move ~/.cache/mpv_removed --write-to ~/dat
 
 That takes any eligible files in `~/data/mpv` (merged or new event files), merges them all into `~/data/mpv/merged-...json` (unique filename using the date), and then moves all the files that were merged to `~/.cache/mpv_removed` (moving them to some temporary directory so you can review the merged file, instead of deleting)
 
-My personal script which does this is synced up [here](https://github.com/seanbreckenridge/bleanser/blob/master/bin/merge-mpv-history)
+My personal script which does this is synced up [here](https://github.com/purarue/bleanser/blob/master/bin/merge-mpv-history)
