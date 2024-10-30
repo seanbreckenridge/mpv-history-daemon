@@ -191,3 +191,30 @@ mpv-history-daemon merge ~/data/mpv --move ~/.cache/mpv_removed --write-to ~/dat
 That takes any eligible files in `~/data/mpv` (merged or new event files), merges them all into `~/data/mpv/merged-...json` (unique filename using the date), and then moves all the files that were merged to `~/.cache/mpv_removed` (moving them to some temporary directory so you can review the merged file, instead of deleting)
 
 My personal script which does this is synced up [here](https://github.com/purarue/bleanser/blob/master/bin/merge-mpv-history)
+
+### Other Example Usage
+
+Through [HPI](https://github.com/purarue/HPI), I have some [shell functions](https://github.com/purarue/HPI/blob/3a97ce376721dd01db5bb33fe296c4d5219a9a9d/scripts/functions.sh#L33-L49) that query this data, e.g. letting me replay the most recently played song:
+
+```bash
+alias mpv-from-stdin='mpv --playlist=- --no-audio-display --msg-level=file=error'
+# list mpv files I've played recently
+mpv-recent() {
+	local args=()
+	if [[ -n "$1" ]]; then
+		args+=("--limit" "$1")
+
+	fi
+	hpi query my.mpv.history_daemon.history --order-type datetime --reverse -s "${args[@]}"
+}
+mpv-recent-path() {
+	mpv-recent "$1" | jq -r .path
+}
+# just replays the most recent song
+alias replay='mpv-recent-path 1 | mpv-from-stdin'
+# requires https://github.com/purarue/exists, https://github.com/purarue/pura-utils
+# prompts me with ~30 recently played songs, lets me pick which one to play
+replay-recent() {
+	mpv-recent-path "$1" | exists | head -n "${1:-$LINES}" | unique | fzf | mpv-from-stdin
+}
+```
